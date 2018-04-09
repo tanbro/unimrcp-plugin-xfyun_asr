@@ -1,0 +1,1 @@
+/usr/bin/cc  -fPIC -g  -shared -Wl,-soname,libxfyun_asr.so -o libxfyun_asr.so CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o 

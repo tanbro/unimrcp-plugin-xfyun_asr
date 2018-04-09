@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build",
+  "command": "/usr/bin/cc  -Dxfyun_asr_EXPORTS  -g -fPIC   -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o   -c /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c",
+  "file": "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c"
+}
+]

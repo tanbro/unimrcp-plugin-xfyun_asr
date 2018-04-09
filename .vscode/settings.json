@@ -1,0 +1,6 @@
+{
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4 }",
+    "cmake.environment": {
+        "XFYUN_MSC_SDK": "${workspaceRoot}/../deps/xfyun-msc-Linux_iat1166_5acb316c"
+    }
+}

@@ -1,0 +1,12 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c
+stdio.h
+-
+
