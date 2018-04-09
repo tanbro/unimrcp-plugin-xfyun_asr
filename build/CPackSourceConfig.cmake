@@ -36,7 +36,7 @@ SET(CPACK_IGNORE_FILES "/CVS/;/\\.svn/;/\\.bzr/;/\\.hg/;/\\.git/;\\.swp\$;\\.#;/
 SET(CPACK_INSTALLED_DIRECTORIES "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr;/")
 SET(CPACK_INSTALL_CMAKE_PROJECTS "")
 SET(CPACK_INSTALL_PREFIX "/usr/local")
-SET(CPACK_MODULE_PATH "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeTools")
+SET(CPACK_MODULE_PATH "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/script/cmake")
 SET(CPACK_NSIS_DISPLAY_NAME "xfyun_asr 0.1.1")
 SET(CPACK_NSIS_INSTALLER_ICON_CODE "")
 SET(CPACK_NSIS_INSTALLER_MUI_ICON_CODE "")

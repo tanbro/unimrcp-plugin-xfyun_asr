@@ -14,6 +14,18 @@
 # EXTERNAL cache entries
 ########################
 
+//Path to a file.
+APRUTIL_INCLUDE_DIR:PATH=/usr/local/apr/include/apr-1
+
+//Path to a library.
+APRUTIL_LIBRARY:FILEPATH=/usr/local/apr/lib/libaprutil-1.so
+
+//Path to a file.
+APR_INCLUDE_DIR:PATH=/usr/local/apr/include/apr-1
+
+//Path to a library.
+APR_LIBRARY:FILEPATH=/usr/local/apr/lib/libapr-1.so
+
 //Build the testing tree.
 BUILD_TESTING:BOOL=ON
 
@@ -255,6 +267,9 @@ MEMORYCHECK_SUPPRESSIONS_FILE:FILEPATH=
 //Path to a program.
 P4COMMAND:FILEPATH=P4COMMAND-NOTFOUND
 
+//pkg-config executable
+PKG_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/pkg-config
+
 //Path to scp command, used by CTest for submitting results to
 // a Dart server
 SCPCOMMAND:FILEPATH=/usr/bin/scp
@@ -274,8 +289,8 @@ SVNCOMMAND:FILEPATH=SVNCOMMAND-NOTFOUND
 //Value Computed by CMake
 xfyun_asr_BINARY_DIR:STATIC=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build
 
-//Dependencies for target
-xfyun_asr_LIB_DEPENDS:STATIC=
+//Dependencies for the target
+xfyun_asr_LIB_DEPENDS:STATIC=general;msc;
 
 //Value Computed by CMake
 xfyun_asr_SOURCE_DIR:STATIC=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr
@@ -285,6 +300,14 @@ xfyun_asr_SOURCE_DIR:STATIC=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xf
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: APRUTIL_INCLUDE_DIR
+APRUTIL_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: APRUTIL_LIBRARY
+APRUTIL_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: APR_INCLUDE_DIR
+APR_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: APR_LIBRARY
+APR_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: BZRCOMMAND
 BZRCOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -458,6 +481,8 @@ CVSCOMMAND-ADVANCED:INTERNAL=1
 CVS_UPDATE_OPTIONS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: DART_TESTING_TIMEOUT
 DART_TESTING_TIMEOUT-ADVANCED:INTERNAL=1
+//Details about finding PkgConfig
+FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig:INTERNAL=[/usr/bin/pkg-config][v0.29.1()]
 //ADVANCED property for variable: GITCOMMAND
 GITCOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: HGCOMMAND
@@ -470,6 +495,8 @@ MEMORYCHECK_COMMAND-ADVANCED:INTERNAL=1
 MEMORYCHECK_SUPPRESSIONS_FILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: P4COMMAND
 P4COMMAND-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
+PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SCPCOMMAND
 SCPCOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SITE

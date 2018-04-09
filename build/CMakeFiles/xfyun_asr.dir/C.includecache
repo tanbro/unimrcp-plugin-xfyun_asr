@@ -6,7 +6,35 @@
 
 #IncludeRegexTransform: 
 
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_cmn.h
+msp_types.h
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_types.h
+
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_errors.h
+
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_types.h
+
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/qisr.h
+msp_types.h
+../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_types.h
+
 /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c
 stdio.h
 -
+stdlib.h
+-
+string.h
+-
+unistd.h
+-
+xfyun_asr.h
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.h
+
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.h
+msp_cmn.h
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/msp_cmn.h
+msp_errors.h
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/msp_errors.h
+qisr.h
+/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/qisr.h
 

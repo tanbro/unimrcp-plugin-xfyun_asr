@@ -10,6 +10,15 @@ set(CMAKE_C_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_C_TARGET_INCLUDE_PATH
+  "/usr/local/apr/include/apr-1"
+  "../../deps/unimrcp-1.5.0/libs/mrcp-engine/include"
+  "../../deps/unimrcp-1.5.0/libs/mrcp/include"
+  "../../deps/unimrcp-1.5.0/libs/mrcp/message/include"
+  "../../deps/unimrcp-1.5.0/libs/mrcp/control/include"
+  "../../deps/unimrcp-1.5.0/libs/mrcp/resources/include"
+  "../../deps/unimrcp-1.5.0/libs/mpf/include"
+  "../../deps/unimrcp-1.5.0/libs/apr-toolkit/include"
+  "../../deps/xfyun-msc-Linux_iat1166_5acb316c/include"
   )
 
 # Targets to which this target links.
