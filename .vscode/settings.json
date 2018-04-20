@@ -3,12 +3,5 @@
     "cmake.environment": {
         "UNIMRCP_SRC_DIR": "${workspaceRoot}/../deps/unimrcp-1.5.0",
         "XFYUN_MSC_SDK_DIR": "${workspaceRoot}/../deps/xfyun-msc-Linux_iat1166_5acb316c"
-    },
-    "files.associations": {
-        "qisr.h": "c",
-        "xfyun_asr.h": "c",
-        "apr_xml.h": "c",
-        "msp_cmn.h": "c",
-        "string.h": "c"
     }
 }

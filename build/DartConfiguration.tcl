@@ -14,7 +14,7 @@ CostDataFile:
 Site: liuxy-develop-desktop
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
-BuildName: Linux-c++
+BuildName: Linux-g++-5
 
 # Submission information
 IsCDash: 
@@ -68,7 +68,7 @@ UpdateOptions:
 UpdateType: git
 
 # Compiler info
-Compiler: /usr/bin/c++
+Compiler: /usr/bin/g++-5
 CompilerVersion: 5.4.0
 
 # Dynamic analysis (MemCheck)

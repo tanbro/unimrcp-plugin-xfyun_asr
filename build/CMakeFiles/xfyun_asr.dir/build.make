@@ -60,15 +60,15 @@ include CMakeFiles/xfyun_asr.dir/flags.make
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o: CMakeFiles/xfyun_asr.dir/flags.make
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o: ../src/xfyun_asr.c
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o"
-	/usr/bin/cc  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o   -c /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c
+	/usr/bin/gcc-5  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o   -c /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c
 
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.i"
-	/usr/bin/cc  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c > CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.i
+	/usr/bin/gcc-5  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c > CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.i
 
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.s"
-	/usr/bin/cc  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.s
+	/usr/bin/gcc-5  $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.s
 
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o.requires:
 
