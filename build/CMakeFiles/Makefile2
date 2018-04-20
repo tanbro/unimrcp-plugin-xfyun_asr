@@ -188,6 +188,203 @@ clean: CMakeFiles/ContinuousBuild.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/NightlyTest.dir
+
+# All Build rule for target.
+CMakeFiles/NightlyTest.dir/all:
+	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/depend
+	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyTest"
+.PHONY : CMakeFiles/NightlyTest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/NightlyTest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyTest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/NightlyTest.dir/rule
+
+# Convenience name for target.
+NightlyTest: CMakeFiles/NightlyTest.dir/rule
+
+.PHONY : NightlyTest
+
+# clean rule for target.
+CMakeFiles/NightlyTest.dir/clean:
+	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/clean
+.PHONY : CMakeFiles/NightlyTest.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/NightlyTest.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/ContinuousUpdate.dir
+
+# All Build rule for target.
+CMakeFiles/ContinuousUpdate.dir/all:
+	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/depend
+	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target ContinuousUpdate"
+.PHONY : CMakeFiles/ContinuousUpdate.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/ContinuousUpdate.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ContinuousUpdate.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/ContinuousUpdate.dir/rule
+
+# Convenience name for target.
+ContinuousUpdate: CMakeFiles/ContinuousUpdate.dir/rule
+
+.PHONY : ContinuousUpdate
+
+# clean rule for target.
+CMakeFiles/ContinuousUpdate.dir/clean:
+	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/clean
+.PHONY : CMakeFiles/ContinuousUpdate.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/ContinuousUpdate.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/xfyun_asr.dir
+
+# All Build rule for target.
+CMakeFiles/xfyun_asr.dir/all:
+	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/depend
+	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num=1,2 "Built target xfyun_asr"
+.PHONY : CMakeFiles/xfyun_asr.dir/all
+
+# Include target in all.
+all: CMakeFiles/xfyun_asr.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/xfyun_asr.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/xfyun_asr.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/xfyun_asr.dir/rule
+
+# Convenience name for target.
+xfyun_asr: CMakeFiles/xfyun_asr.dir/rule
+
+.PHONY : xfyun_asr
+
+# clean rule for target.
+CMakeFiles/xfyun_asr.dir/clean:
+	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/clean
+.PHONY : CMakeFiles/xfyun_asr.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/xfyun_asr.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/NightlyUpdate.dir
+
+# All Build rule for target.
+CMakeFiles/NightlyUpdate.dir/all:
+	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/depend
+	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyUpdate"
+.PHONY : CMakeFiles/NightlyUpdate.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/NightlyUpdate.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyUpdate.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/NightlyUpdate.dir/rule
+
+# Convenience name for target.
+NightlyUpdate: CMakeFiles/NightlyUpdate.dir/rule
+
+.PHONY : NightlyUpdate
+
+# clean rule for target.
+CMakeFiles/NightlyUpdate.dir/clean:
+	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/clean
+.PHONY : CMakeFiles/NightlyUpdate.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/NightlyUpdate.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/NightlyBuild.dir
+
+# All Build rule for target.
+CMakeFiles/NightlyBuild.dir/all:
+	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/depend
+	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyBuild"
+.PHONY : CMakeFiles/NightlyBuild.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/NightlyBuild.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyBuild.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/NightlyBuild.dir/rule
+
+# Convenience name for target.
+NightlyBuild: CMakeFiles/NightlyBuild.dir/rule
+
+.PHONY : NightlyBuild
+
+# clean rule for target.
+CMakeFiles/NightlyBuild.dir/clean:
+	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/clean
+.PHONY : CMakeFiles/NightlyBuild.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/NightlyBuild.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/Continuous.dir
+
+# All Build rule for target.
+CMakeFiles/Continuous.dir/all:
+	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/depend
+	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target Continuous"
+.PHONY : CMakeFiles/Continuous.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/Continuous.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Continuous.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
+.PHONY : CMakeFiles/Continuous.dir/rule
+
+# Convenience name for target.
+Continuous: CMakeFiles/Continuous.dir/rule
+
+.PHONY : Continuous
+
+# clean rule for target.
+CMakeFiles/Continuous.dir/clean:
+	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/clean
+.PHONY : CMakeFiles/Continuous.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/Continuous.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/ContinuousMemCheck.dir
 
 # All Build rule for target.
@@ -248,134 +445,6 @@ CMakeFiles/Nightly.dir/clean:
 
 # clean rule for target.
 clean: CMakeFiles/Nightly.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/NightlyTest.dir
-
-# All Build rule for target.
-CMakeFiles/NightlyTest.dir/all:
-	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/depend
-	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyTest"
-.PHONY : CMakeFiles/NightlyTest.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/NightlyTest.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyTest.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/NightlyTest.dir/rule
-
-# Convenience name for target.
-NightlyTest: CMakeFiles/NightlyTest.dir/rule
-
-.PHONY : NightlyTest
-
-# clean rule for target.
-CMakeFiles/NightlyTest.dir/clean:
-	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/clean
-.PHONY : CMakeFiles/NightlyTest.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/NightlyTest.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/NightlyUpdate.dir
-
-# All Build rule for target.
-CMakeFiles/NightlyUpdate.dir/all:
-	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/depend
-	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyUpdate"
-.PHONY : CMakeFiles/NightlyUpdate.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/NightlyUpdate.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyUpdate.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/NightlyUpdate.dir/rule
-
-# Convenience name for target.
-NightlyUpdate: CMakeFiles/NightlyUpdate.dir/rule
-
-.PHONY : NightlyUpdate
-
-# clean rule for target.
-CMakeFiles/NightlyUpdate.dir/clean:
-	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/clean
-.PHONY : CMakeFiles/NightlyUpdate.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/NightlyUpdate.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/Continuous.dir
-
-# All Build rule for target.
-CMakeFiles/Continuous.dir/all:
-	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/depend
-	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target Continuous"
-.PHONY : CMakeFiles/Continuous.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/Continuous.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Continuous.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/Continuous.dir/rule
-
-# Convenience name for target.
-Continuous: CMakeFiles/Continuous.dir/rule
-
-.PHONY : Continuous
-
-# clean rule for target.
-CMakeFiles/Continuous.dir/clean:
-	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/clean
-.PHONY : CMakeFiles/Continuous.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/Continuous.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/NightlyBuild.dir
-
-# All Build rule for target.
-CMakeFiles/NightlyBuild.dir/all:
-	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/depend
-	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target NightlyBuild"
-.PHONY : CMakeFiles/NightlyBuild.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/NightlyBuild.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/NightlyBuild.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/NightlyBuild.dir/rule
-
-# Convenience name for target.
-NightlyBuild: CMakeFiles/NightlyBuild.dir/rule
-
-.PHONY : NightlyBuild
-
-# clean rule for target.
-CMakeFiles/NightlyBuild.dir/clean:
-	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/clean
-.PHONY : CMakeFiles/NightlyBuild.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/NightlyBuild.dir/clean
 
 .PHONY : clean
 
@@ -920,75 +989,6 @@ CMakeFiles/ContinuousStart.dir/clean:
 
 # clean rule for target.
 clean: CMakeFiles/ContinuousStart.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/xfyun_asr.dir
-
-# All Build rule for target.
-CMakeFiles/xfyun_asr.dir/all:
-	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/depend
-	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num=1,2 "Built target xfyun_asr"
-.PHONY : CMakeFiles/xfyun_asr.dir/all
-
-# Include target in all.
-all: CMakeFiles/xfyun_asr.dir/all
-
-.PHONY : all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/xfyun_asr.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/xfyun_asr.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/xfyun_asr.dir/rule
-
-# Convenience name for target.
-xfyun_asr: CMakeFiles/xfyun_asr.dir/rule
-
-.PHONY : xfyun_asr
-
-# clean rule for target.
-CMakeFiles/xfyun_asr.dir/clean:
-	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/clean
-.PHONY : CMakeFiles/xfyun_asr.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/xfyun_asr.dir/clean
-
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/ContinuousUpdate.dir
-
-# All Build rule for target.
-CMakeFiles/ContinuousUpdate.dir/all:
-	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/depend
-	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num= "Built target ContinuousUpdate"
-.PHONY : CMakeFiles/ContinuousUpdate.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/ContinuousUpdate.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/ContinuousUpdate.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles 0
-.PHONY : CMakeFiles/ContinuousUpdate.dir/rule
-
-# Convenience name for target.
-ContinuousUpdate: CMakeFiles/ContinuousUpdate.dir/rule
-
-.PHONY : ContinuousUpdate
-
-# clean rule for target.
-CMakeFiles/ContinuousUpdate.dir/clean:
-	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/clean
-.PHONY : CMakeFiles/ContinuousUpdate.dir/clean
-
-# clean rule for target.
-clean: CMakeFiles/ContinuousUpdate.dir/clean
 
 .PHONY : clean
 

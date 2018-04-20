@@ -90,6 +90,7 @@ xfyun_asr_EXTERNAL_OBJECTS =
 
 libxfyun_asr.so: CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o
 libxfyun_asr.so: CMakeFiles/xfyun_asr.dir/build.make
+libxfyun_asr.so: ../../deps/xfyun-msc-Linux_iat1166_5acb316c/libs/x64/libmsc.so
 libxfyun_asr.so: CMakeFiles/xfyun_asr.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C shared library libxfyun_asr.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/xfyun_asr.dir/link.txt --verbose=$(VERBOSE)

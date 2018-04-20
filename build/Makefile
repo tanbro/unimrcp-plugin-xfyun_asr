@@ -196,6 +196,84 @@ ContinuousBuild/fast:
 .PHONY : ContinuousBuild/fast
 
 #=============================================================================
+# Target rules for targets named NightlyTest
+
+# Build rule for target.
+NightlyTest: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 NightlyTest
+.PHONY : NightlyTest
+
+# fast build rule for target.
+NightlyTest/fast:
+	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/build
+.PHONY : NightlyTest/fast
+
+#=============================================================================
+# Target rules for targets named ContinuousUpdate
+
+# Build rule for target.
+ContinuousUpdate: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ContinuousUpdate
+.PHONY : ContinuousUpdate
+
+# fast build rule for target.
+ContinuousUpdate/fast:
+	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/build
+.PHONY : ContinuousUpdate/fast
+
+#=============================================================================
+# Target rules for targets named xfyun_asr
+
+# Build rule for target.
+xfyun_asr: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 xfyun_asr
+.PHONY : xfyun_asr
+
+# fast build rule for target.
+xfyun_asr/fast:
+	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/build
+.PHONY : xfyun_asr/fast
+
+#=============================================================================
+# Target rules for targets named NightlyUpdate
+
+# Build rule for target.
+NightlyUpdate: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 NightlyUpdate
+.PHONY : NightlyUpdate
+
+# fast build rule for target.
+NightlyUpdate/fast:
+	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/build
+.PHONY : NightlyUpdate/fast
+
+#=============================================================================
+# Target rules for targets named NightlyBuild
+
+# Build rule for target.
+NightlyBuild: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 NightlyBuild
+.PHONY : NightlyBuild
+
+# fast build rule for target.
+NightlyBuild/fast:
+	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/build
+.PHONY : NightlyBuild/fast
+
+#=============================================================================
+# Target rules for targets named Continuous
+
+# Build rule for target.
+Continuous: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Continuous
+.PHONY : Continuous
+
+# fast build rule for target.
+Continuous/fast:
+	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/build
+.PHONY : Continuous/fast
+
+#=============================================================================
 # Target rules for targets named ContinuousMemCheck
 
 # Build rule for target.
@@ -220,58 +298,6 @@ Nightly: cmake_check_build_system
 Nightly/fast:
 	$(MAKE) -f CMakeFiles/Nightly.dir/build.make CMakeFiles/Nightly.dir/build
 .PHONY : Nightly/fast
-
-#=============================================================================
-# Target rules for targets named NightlyTest
-
-# Build rule for target.
-NightlyTest: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 NightlyTest
-.PHONY : NightlyTest
-
-# fast build rule for target.
-NightlyTest/fast:
-	$(MAKE) -f CMakeFiles/NightlyTest.dir/build.make CMakeFiles/NightlyTest.dir/build
-.PHONY : NightlyTest/fast
-
-#=============================================================================
-# Target rules for targets named NightlyUpdate
-
-# Build rule for target.
-NightlyUpdate: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 NightlyUpdate
-.PHONY : NightlyUpdate
-
-# fast build rule for target.
-NightlyUpdate/fast:
-	$(MAKE) -f CMakeFiles/NightlyUpdate.dir/build.make CMakeFiles/NightlyUpdate.dir/build
-.PHONY : NightlyUpdate/fast
-
-#=============================================================================
-# Target rules for targets named Continuous
-
-# Build rule for target.
-Continuous: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Continuous
-.PHONY : Continuous
-
-# fast build rule for target.
-Continuous/fast:
-	$(MAKE) -f CMakeFiles/Continuous.dir/build.make CMakeFiles/Continuous.dir/build
-.PHONY : Continuous/fast
-
-#=============================================================================
-# Target rules for targets named NightlyBuild
-
-# Build rule for target.
-NightlyBuild: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 NightlyBuild
-.PHONY : NightlyBuild
-
-# fast build rule for target.
-NightlyBuild/fast:
-	$(MAKE) -f CMakeFiles/NightlyBuild.dir/build.make CMakeFiles/NightlyBuild.dir/build
-.PHONY : NightlyBuild/fast
 
 #=============================================================================
 # Target rules for targets named NightlyStart
@@ -494,32 +520,6 @@ ContinuousStart/fast:
 	$(MAKE) -f CMakeFiles/ContinuousStart.dir/build.make CMakeFiles/ContinuousStart.dir/build
 .PHONY : ContinuousStart/fast
 
-#=============================================================================
-# Target rules for targets named xfyun_asr
-
-# Build rule for target.
-xfyun_asr: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 xfyun_asr
-.PHONY : xfyun_asr
-
-# fast build rule for target.
-xfyun_asr/fast:
-	$(MAKE) -f CMakeFiles/xfyun_asr.dir/build.make CMakeFiles/xfyun_asr.dir/build
-.PHONY : xfyun_asr/fast
-
-#=============================================================================
-# Target rules for targets named ContinuousUpdate
-
-# Build rule for target.
-ContinuousUpdate: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ContinuousUpdate
-.PHONY : ContinuousUpdate
-
-# fast build rule for target.
-ContinuousUpdate/fast:
-	$(MAKE) -f CMakeFiles/ContinuousUpdate.dir/build.make CMakeFiles/ContinuousUpdate.dir/build
-.PHONY : ContinuousUpdate/fast
-
 src/xfyun_asr.o: src/xfyun_asr.c.o
 
 .PHONY : src/xfyun_asr.o
@@ -559,13 +559,15 @@ help:
 	@echo "... ContinuousCoverage"
 	@echo "... ContinuousTest"
 	@echo "... ContinuousBuild"
-	@echo "... ContinuousMemCheck"
-	@echo "... Nightly"
 	@echo "... package"
 	@echo "... NightlyTest"
+	@echo "... ContinuousUpdate"
+	@echo "... xfyun_asr"
 	@echo "... NightlyUpdate"
-	@echo "... Continuous"
 	@echo "... NightlyBuild"
+	@echo "... Continuous"
+	@echo "... ContinuousMemCheck"
+	@echo "... Nightly"
 	@echo "... NightlyStart"
 	@echo "... NightlyMemoryCheck"
 	@echo "... NightlyMemCheck"
@@ -585,8 +587,6 @@ help:
 	@echo "... NightlySubmit"
 	@echo "... ExperimentalSubmit"
 	@echo "... ContinuousStart"
-	@echo "... xfyun_asr"
-	@echo "... ContinuousUpdate"
 	@echo "... src/xfyun_asr.o"
 	@echo "... src/xfyun_asr.i"
 	@echo "... src/xfyun_asr.s"

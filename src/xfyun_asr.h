@@ -37,7 +37,27 @@ MRCP_PLUGIN_VERSION_DECLARE
 MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
 
 /** Use custom log source mark */
-#define BDSR_LOG_MARK APT_LOG_MARK_DECLARE(XFYUNASR_PLUGIN)
+#define XFYUNASR_LOG_MARK APT_LOG_MARK_DECLARE(XFYUNASR_PLUGIN)
+
+#define LOGGER "\t[XFYUN_ASR-PLUGIN]\t"
+#define LOG(level, fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, level, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_DEBUG, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_INFO, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_NOTICE(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_NOTICE, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_WARNING(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_WARNING, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_ERROR, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_CRITICAL(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_CRITICAL, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_ALERT(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_ALERT, LOGGER fmt, ##__VA_ARGS__)
+#define LOG_EMERGENCY(fmt, ...) \
+    apt_log(XFYUNASR_LOG_MARK, APT_PRIO_EMERGENCY, LOGGER fmt, ##__VA_ARGS__)
 
 /** Declaration of recognizer engine object to associate */
 typedef struct _recog_plugin_engine_t {

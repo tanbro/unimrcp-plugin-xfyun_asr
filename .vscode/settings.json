@@ -3,5 +3,9 @@
     "cmake.environment": {
         "UNIMRCP_SRC_DIR": "${workspaceRoot}/../deps/unimrcp-1.5.0",
         "XFYUN_MSC_SDK_DIR": "${workspaceRoot}/../deps/xfyun-msc-Linux_iat1166_5acb316c"
+    },
+    "files.associations": {
+        "Pipfile": "toml",
+        "xfyun_asr_logging.h": "c"
     }
 }

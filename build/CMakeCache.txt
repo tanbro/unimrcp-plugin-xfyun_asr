@@ -290,7 +290,7 @@ SVNCOMMAND:FILEPATH=SVNCOMMAND-NOTFOUND
 xfyun_asr_BINARY_DIR:STATIC=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build
 
 //Dependencies for the target
-xfyun_asr_LIB_DEPENDS:STATIC=general;msc;
+xfyun_asr_LIB_DEPENDS:STATIC=general;/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/xfyun-msc-Linux_iat1166_5acb316c/libs/x64/libmsc.so;
 
 //Value Computed by CMake
 xfyun_asr_SOURCE_DIR:STATIC=/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr

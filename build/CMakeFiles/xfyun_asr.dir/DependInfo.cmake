@@ -10,6 +10,7 @@ set(CMAKE_C_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_C_TARGET_INCLUDE_PATH
+  "../src"
   "../../deps/unimrcp-1.5.0/libs/mrcp-engine/include"
   "../../deps/unimrcp-1.5.0/libs/mrcp/include"
   "../../deps/unimrcp-1.5.0/libs/mrcp/message/include"

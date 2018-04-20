@@ -35,7 +35,8 @@
                 "/usr/local/include",
                 "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
                 "/usr/include/x86_64-linux-gnu",
-                "/usr/include"
+                "/usr/include",
+                "${workspaceFolder}"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -50,6 +51,15 @@
                     "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
                     "/usr/include/x86_64-linux-gnu",
                     "/usr/include",
+                    "${workspaceRoot}",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp-engine/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp-engine/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/message/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/control/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/resources/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mpf/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/apr-toolkit/include",
                     "/usr/local/apr/include/apr-1",
                     "${workspaceFolder}/../deps/xfyun-msc-Linux_iat1166_5acb316c/include"
                 ],

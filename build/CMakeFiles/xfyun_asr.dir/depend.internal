@@ -3,62 +3,14 @@
 
 CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o
  ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_consumer_task.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_dir_layout.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_header_field.h
  ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_log.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_pair.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_string.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_string_table.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_task.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_task_msg.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_text_stream.h
- ../../deps/unimrcp-1.5.0/libs/apr-toolkit/include/apt_timer_queue.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_activity_detector.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_codec.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_codec_descriptor.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_frame.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_named_event.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_stream.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_stream_descriptor.h
- ../../deps/unimrcp-1.5.0/libs/mpf/include/mpf_types.h
- ../../deps/unimrcp-1.5.0/libs/mrcp-engine/include/mrcp_engine_impl.h
- ../../deps/unimrcp-1.5.0/libs/mrcp-engine/include/mrcp_engine_plugin.h
- ../../deps/unimrcp-1.5.0/libs/mrcp-engine/include/mrcp_engine_types.h
- ../../deps/unimrcp-1.5.0/libs/mrcp-engine/include/mrcp_recog_engine.h
- ../../deps/unimrcp-1.5.0/libs/mrcp-engine/include/mrcp_state_machine.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/include/mrcp.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/include/mrcp_types.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/message/include/mrcp_generic_header.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/message/include/mrcp_header.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/message/include/mrcp_header_accessor.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/message/include/mrcp_message.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/message/include/mrcp_start_line.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/resources/include/mrcp_recog_header.h
- ../../deps/unimrcp-1.5.0/libs/mrcp/resources/include/mrcp_recog_resource.h
- ../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_cmn.h
- ../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_errors.h
- ../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/msp_types.h
- ../../deps/xfyun-msc-Linux_iat1166_5acb316c/include/qisr.h
  /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c
- /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.h
+ /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr_logging.h
  /usr/local/apr/include/apr-1/apr.h
  /usr/local/apr/include/apr-1/apr_allocator.h
  /usr/local/apr/include/apr-1/apr_errno.h
- /usr/local/apr/include/apr-1/apr_file_info.h
- /usr/local/apr/include/apr-1/apr_file_io.h
  /usr/local/apr/include/apr-1/apr_general.h
- /usr/local/apr/include/apr-1/apr_inherit.h
  /usr/local/apr/include/apr-1/apr_pools.h
- /usr/local/apr/include/apr-1/apr_ring.h
  /usr/local/apr/include/apr-1/apr_strings.h
- /usr/local/apr/include/apr-1/apr_tables.h
  /usr/local/apr/include/apr-1/apr_thread_mutex.h
- /usr/local/apr/include/apr-1/apr_time.h
- /usr/local/apr/include/apr-1/apr_user.h
- /usr/local/apr/include/apr-1/apr_version.h
  /usr/local/apr/include/apr-1/apr_want.h
- /usr/local/apr/include/apr-1/apr_xlate.h
- /usr/local/apr/include/apr-1/apr_xml.h
- /usr/local/apr/include/apr-1/apu.h

@@ -5,4 +5,6 @@
 
 #include "xfyun_asr.h"
 
-void say_hello() { printf("Hello, from xfyun_asr!\n"); }
+void say_hello() { 
+    LOG_INFO("Hello");
+ }

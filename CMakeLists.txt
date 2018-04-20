@@ -12,6 +12,16 @@ INCLUDE(${CMAKE_HOME_DIRECTORY}/script/cmake/version_string.cmake)
 # 要引入的自定义 CMake 脚本
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/script/cmake)
 
+
+# Source files
+set (SRC_ROOT_DIR ${CMAKE_HOME_DIRECTORY}/src)
+include_directories(${SRC_ROOT_DIR})
+
+# 该插件的共享库项目
+add_library(${PROJECT_NAME} SHARED
+    ${SRC_ROOT_DIR}/xfyun_asr.c
+)
+
 # uniMRCP
 IF(NOT DEFINED ENV{UNIMRCP_SRC_DIR})
     set(UNIMRCP_SRC_DIR "${CMAKE_HOME_DIRECTORY}/../deps/unimrcp-1.5.0")
@@ -47,39 +57,40 @@ set (PLUGIN_INCLUDE_DIRS
 include_directories(${PLUGIN_INCLUDE_DIRS})
 
 # 讯飞 MSC SDK
-IF(NOT DEFINED ENV{XFYUN_MSC_SDK_DIR})
-    set(XFYUN_MSC_SDK_DIR "${CMAKE_HOME_DIRECTORY}/../deps/xfyun-msc-Linux_iat1166_5acb316c")
-    message("Environment variable `XFYUN_MSC_SDK_DIR` not defined. Consider it is ${XFYUN_MSC_SDK_DIR}")
+IF(NOT DEFINED ENV{MSC_SDK_DIR})
+    set(MSC_SDK_DIR "${CMAKE_HOME_DIRECTORY}/../deps/xfyun-msc-Linux_iat1166_5acb316c")
+    message("Environment variable `MSC_SDK_DIR` not defined. Consider it is ${MSC_SDK_DIR}")
 ELSE()
-    set(XFYUN_MSC_SDK_DIR $ENV{XFYUN_MSC_SDK_DIR})
+    set(MSC_SDK_DIR $ENV{MSC_SDK_DIR})
 ENDIF()
 
-set (XFYUN_MSC_SDK_INCLUDE_DIRS ${XFYUN_MSC_SDK_DIR}/include)
-include_directories(${XFYUN_MSC_SDK_INCLUDE_DIRS})
+set (MSC_SDK_INCLUDE_DIRS ${MSC_SDK_DIR}/include)
+include_directories(${MSC_SDK_INCLUDE_DIRS})
 
 if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    message(STATUS "add link-dir: ${XFYUN_MSC_SDK_DIR}/libs/x64")
-    link_directories(${XFYUN_MSC_SDK_DIR}/libs/x64)
+    set(MSC_LIB_DIR "libs/x64")
 elseif(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86")
-    message(STATUS "add link-dir: ${XFYUN_MSC_SDK_DIR}/libs/x86")
-    link_directories(${XFYUN_MSC_SDK_DIR}/libs/x86)
+    set(MSC_LIB_DIR "libs/x86")
 else()
     message(FATAL_ERROR "Un-supported prosessor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
-target_link_libraries(${PROJECT_NAME} msc)
+
+if (UNIX)
+    set(MSC_LIB_FILE_NAME "libmsc.so")
+elseif (WIN32)
+    set(MSC_LIB_FILE_NAME "msc.dll")
+else()
+    message(FATAL_ERROR "Un-supported system: ${CMAKE_SYSTEM_NAME}")
+endif()
+message(STATUS "MSC link: ${MSC_SDK_DIR}/${MSC_LIB_DIR}/${MSC_LIB_FILE_NAME}")
+target_link_libraries(${PROJECT_NAME} ${MSC_SDK_DIR}/${MSC_LIB_DIR}/${MSC_LIB_FILE_NAME})
+
 
 # CTEST
 include(CTest)
 enable_testing()
 
-# 该插件的共享库项目
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
-
-# Source files
-set (SRC_ROOT_DIR ${CMAKE_HOME_DIRECTORY}/src)
-add_library(${PROJECT_NAME} SHARED
-    ${SRC_ROOT_DIR}/xfyun_asr.c
-)
 
