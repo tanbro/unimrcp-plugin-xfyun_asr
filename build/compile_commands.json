@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/build",
-  "command": "/usr/bin/gcc-5  -Dxfyun_asr_EXPORTS -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mrcp-engine/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mrcp/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mrcp/message/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mrcp/control/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mrcp/resources/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/mpf/include -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/unimrcp-1.5.0/libs/apr-toolkit/include -I/usr/local/apr/include/apr-1 -I/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/../deps/xfyun-msc-Linux_iat1166_5acb316c/include  -g -fPIC   -o CMakeFiles/xfyun_asr.dir/src/xfyun_asr.c.o   -c /mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c",
-  "file": "/mnt/1B9074BA60C16502/works/huamei/unimrcp-plugin/xfyun_asr/src/xfyun_asr.c"
-}
-]
