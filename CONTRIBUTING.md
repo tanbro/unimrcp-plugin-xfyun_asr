@@ -36,9 +36,7 @@
 
 ## UniMRCP
 
-1. 获取[UniMRCP]主程序源代码
-
-    下载[UniMRCP](www.unimrcp.org)最新稳定版(目前是`1.5.0`)主程序源代码，解压缩:
+1. 下载[UniMRCP]最新稳定版(目前是`1.5.0`)主程序源代码，然后解压到工作目录。
 
     ```sh
     cd path/of/workspace/deps
@@ -46,13 +44,13 @@
     tar -xf unimrcp-1.5.0.tar.gz
     ```
 
-2. 安装[UniMRCP]依赖库
+1. 安装[UniMRCP]依赖库
 
-    从 <https://www.unimrcp.org/project/component-view/dependencies> 下载 [UniMRCP](www.unimrcp.org) 主程序最新稳定版(目前是`1.5.0`)对应的依赖库。
+    从 <https://www.unimrcp.org/project/component-view/dependencies> 下载[UniMRCP]主程序最新稳定版(目前是`1.5.0`)对应的依赖库。
 
     **注意**:
 
-    > [UniMRCP](www.unimrcp.org) 使用的依赖库是修改过的，**一定**要使用`UniMRCP`官方提供的与主程序对应的依赖包。
+    > [UniMRCP]使用的依赖库是修改过的，**一定**要使用`UniMRCP`官方提供的与主程序对应的依赖包。
 
     解压缩依赖库，然后进入目录；根据说明文档，编译并安装依赖库:
 
