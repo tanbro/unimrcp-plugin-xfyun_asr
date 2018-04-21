@@ -1,8 +1,25 @@
 #ifndef _XFYUN_ASR_H_
 #define _XFYUN_ASR_H_
 
+///////////////////////////
+// gcc/git 产生的版本信息
+#define MAKE_STR(x) _MAKE_STR(x)
+#define _MAKE_STR(x) #x
+
+#ifndef VERSION_STRING
+#define VERSION_STRING 0
+#endif
+
+#ifndef COMPILER_STRING
+#define COMPILER_STRING "c"
+#endif
+///////////////////////////
+
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 // unimrcp plugin requires includes
 #include "apt_consumer_task.h"
@@ -60,14 +77,14 @@ MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
     apt_log(XFYUNASR_LOG_MARK, APT_PRIO_EMERGENCY, LOGGER fmt, ##__VA_ARGS__)
 
 /** Declaration of recognizer engine object to associate */
-typedef struct _recog_plugin_engine_t {
+typedef struct _engine_object_t {
     apt_consumer_task_t* task;
-} recog_plugin_engine_t;
+} engine_object_t;
 
 /** Declaration of recognizer channel */
 typedef struct _session_t {
     /** Back pointer to engine */
-    recog_plugin_engine_t* obj;
+    engine_object_t* obj;
     /** Engine channel base */
     mrcp_engine_channel_t* channel;
     /** Active (in-progress) recognition request */
@@ -87,11 +104,11 @@ typedef enum {
     PLUGIN_MSG_CHANNEL_PROCESS_REQUEST
 } plugin_msg_type_e;
 /** Declaration of demo recognizer task message */
-typedef struct _plugin_msg_t {
+typedef struct _task_msg_t {
     plugin_msg_type_e type;
     mrcp_engine_channel_t* channel;
     mrcp_message_t* request;
-} plugin_msg_t;
+} task_msg_t;
 
 /**
  * The plugin must implement the creator function of the resource engine, which
@@ -115,17 +132,16 @@ MRCP_PLUGIN_DECLARE(mrcp_engine_t*) mrcp_plugin_create(apr_pool_t* pool);
  */
 
 /** Virtual destroy */
-static apt_bool_t bdsr_engine_destroy(mrcp_engine_t* engine);
+static apt_bool_t plugin_destroy(mrcp_engine_t* engine);
 /** Virtual open */
-static apt_bool_t bdsr_engine_open(mrcp_engine_t* engine);
+static apt_bool_t plugin_open(mrcp_engine_t* engine);
 /** Virtual close */
-static apt_bool_t bdsr_engine_close(mrcp_engine_t* engine);
+static apt_bool_t plugin_close(mrcp_engine_t* engine);
 /** Virtual channel create */
-static mrcp_engine_channel_t* bdsr_channel_create(mrcp_engine_t* engine,
-                                                  apr_pool_t* pool);
+static mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine,
+                                             apr_pool_t* pool);
 /** Table of MRCP engine virtual methods */
-static const struct mrcp_engine_method_vtable_t bdsr_engine_vtable = {
-    bdsr_engine_destroy, bdsr_engine_open, bdsr_engine_close,
-    bdsr_channel_create};
+static const struct mrcp_engine_method_vtable_t engine_vtable = {
+    plugin_destroy, plugin_open, plugin_close, channel_create};
 
 #endif

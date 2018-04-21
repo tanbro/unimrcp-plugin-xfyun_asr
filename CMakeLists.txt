@@ -74,17 +74,8 @@ elseif(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86")
 else()
     message(FATAL_ERROR "Un-supported prosessor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 endif()
-
-if (UNIX)
-    set(MSC_LIB_FILE_NAME "libmsc.so")
-elseif (WIN32)
-    set(MSC_LIB_FILE_NAME "msc.dll")
-else()
-    message(FATAL_ERROR "Un-supported system: ${CMAKE_SYSTEM_NAME}")
-endif()
-message(STATUS "MSC link: ${MSC_SDK_DIR}/${MSC_LIB_DIR}/${MSC_LIB_FILE_NAME}")
-target_link_libraries(${PROJECT_NAME} ${MSC_SDK_DIR}/${MSC_LIB_DIR}/${MSC_LIB_FILE_NAME})
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${MSC_SDK_DIR}/${MSC_LIB_DIR}")
+target_link_libraries(${PROJECT_NAME} msc)
 
 # CTEST
 include(CTest)
