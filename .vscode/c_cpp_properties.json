@@ -60,9 +60,8 @@
                     "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/resources/include",
                     "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mpf/include",
                     "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/apr-toolkit/include",
-                    "${workspaceRoot}/../deps/baidu-asr-linux-cpp-sdk.3.0.2/include",
-                    "/usr/local/apr/include/apr-1",
-                    "/usr/include/libxml2"
+                    "${workspaceRoot}/../deps/xfy_linux_iat/include",
+                    "/usr/local/apr/include/apr-1"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
