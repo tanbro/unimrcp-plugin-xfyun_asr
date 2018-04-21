@@ -58,7 +58,7 @@ include_directories(${PLUGIN_INCLUDE_DIRS})
 
 # 讯飞 MSC SDK
 IF(NOT DEFINED ENV{MSC_SDK_DIR})
-    set(MSC_SDK_DIR "${CMAKE_HOME_DIRECTORY}/../deps/xfyun-msc-Linux_iat1166_5acb316c")
+    set(MSC_SDK_DIR "${CMAKE_HOME_DIRECTORY}/../deps/xfy_linux_iat")
     message("Environment variable `MSC_SDK_DIR` not defined. Consider it is ${MSC_SDK_DIR}")
 ELSE()
     set(MSC_SDK_DIR $ENV{MSC_SDK_DIR})
