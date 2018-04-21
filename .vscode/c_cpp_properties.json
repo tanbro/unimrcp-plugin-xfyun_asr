@@ -1,0 +1,94 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/usr/include",
+                "/usr/local/include",
+                "${workspaceRoot}"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/include",
+                    "/usr/local/include",
+                    "${workspaceRoot}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ]
+        },
+        {
+            "name": "Linux",
+            "intelliSenseMode": "clang-x64",
+            "cStandard": "c99",
+            "cppStandard": "c++03",
+            "compileCommands": "${workspaceRoot}/build/compile_commands.json",
+            "defines": [],
+            "includePath": [
+                "/usr/include/c++/5",
+                "/usr/include/x86_64-linux-gnu/c++/5",
+                "/usr/include/c++/5/backward",
+                "/usr/lib/gcc/x86_64-linux-gnu/5/include",
+                "/usr/local/include",
+                "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+                "/usr/include/x86_64-linux-gnu",
+                "/usr/include",
+                "${workspaceRoot}"
+            ],
+            "browse": {
+                "path": [
+                    "/usr/include/c++/5",
+                    "/usr/include/x86_64-linux-gnu/c++/5",
+                    "/usr/include/c++/5/backward",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include",
+                    "/usr/local/include",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+                    "/usr/include/x86_64-linux-gnu",
+                    "/usr/include",
+                    "${workspaceRoot}",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp-engine/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp-engine/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/message/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/control/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mrcp/resources/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mpf/include",
+                    "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/apr-toolkit/include",
+                    "${workspaceRoot}/../deps/baidu-asr-linux-cpp-sdk.3.0.2/include",
+                    "/usr/local/apr/include/apr-1",
+                    "/usr/include/libxml2"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
+                "${workspaceRoot}"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
+                    "${workspaceRoot}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 3
+}
