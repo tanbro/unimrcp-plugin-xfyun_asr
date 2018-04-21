@@ -99,13 +99,13 @@ typedef struct _session_t {
 } session_t;
 
 typedef enum {
-    PLUGIN_MSG_CHANNEL_OPEN,
-    PLUGIN_MSG_CHANNEL_CLOSE,
-    PLUGIN_MSG_CHANNEL_PROCESS_REQUEST
-} plugin_msg_type_e;
+    CHANNEL_OPEN,
+    CHANNEL_CLOSE,
+    CHANNEL_PROCESS_REQUEST
+} task_msg_type_e;
 /** Declaration of demo recognizer task message */
 typedef struct _task_msg_t {
-    plugin_msg_type_e type;
+    task_msg_type_e type;
     mrcp_engine_channel_t* channel;
     mrcp_message_t* request;
 } task_msg_t;
@@ -143,5 +143,69 @@ static mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine,
 /** Table of MRCP engine virtual methods */
 static const struct mrcp_engine_method_vtable_t engine_vtable = {
     plugin_destroy, plugin_open, plugin_close, channel_create};
+
+/**
+ * The resource channel interface
+ */
+
+/**
+ * The resource channel is created in the scope of the MRCP session and gets
+ * destroyed with the session termination. The following methods of the resource
+ * channel need to be implemented in the plugin.
+ */
+
+/** Virtual destroy */
+static apt_bool_t channel_destroy(mrcp_engine_channel_t* channel);
+/** Virtual open */
+static apt_bool_t channel_open(mrcp_engine_channel_t* channel);
+/** Virtual close */
+static apt_bool_t channel_close(mrcp_engine_channel_t* channel);
+/** Virtual process_request */
+static apt_bool_t channel_process_request(mrcp_engine_channel_t* channel,
+                                          mrcp_message_t* request);
+/** Table of channel virtual methods */
+static const struct mrcp_engine_channel_method_vtable_t channel_vtable = {
+    channel_destroy, channel_open, channel_close, channel_process_request};
+
+/**
+ * The audio stream interface
+ *
+ */
+
+/**
+ * The audio stream interface needs to be implemented in order to process audio
+ * data, for example, from the server to the ASR engine or, in reverse
+ * direction, from the TTS engine to the server.
+ */
+
+/** Virtual destroy method */
+static apt_bool_t stream_destroy(mpf_audio_stream_t* stream);
+/** Virtual open transmitter method */
+static apt_bool_t stream_open_rx(mpf_audio_stream_t* stream,
+                                 mpf_codec_t* codec);
+/** Virtual close transmitter method */
+static apt_bool_t stream_close_rx(mpf_audio_stream_t* stream);
+/** Virtual write frame method */
+static apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
+                                     const mpf_frame_t* frame);
+/** Table of audio stream virtual methods */
+static const mpf_audio_stream_vtable_t stream_vtable = {
+    stream_destroy,     NULL, NULL, NULL, stream_open_rx, stream_close_rx,
+    stream_write_frame, NULL};
+
+/**
+ * 异步任务处理
+ */
+static apt_bool_t task_msg_signal(task_msg_type_e type,
+                                  mrcp_engine_channel_t* channel,
+                                  mrcp_message_t* request);
+static apt_bool_t task_msg_process(apt_task_t* task, apt_task_msg_t* msg);
+
+/**
+ * 异步任务处理函数
+ */
+static apt_bool_t on_channel_open(session_t* sess);
+static void on_channel_close(session_t* sess);
+static void on_channel_request(session_t* sess, mrcp_message_t* request);
 
 #endif

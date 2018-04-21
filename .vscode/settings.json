@@ -1,5 +1,5 @@
 {
-    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4 }",
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Chromium, IndentWidth: 4 }",
     "cmake.environment": {
         "UNIMRCP_SRC_DIR": "${workspaceRoot}/../deps/unimrcp-1.5.0",
         "XFYUN_MSC_SDK_DIR": "${workspaceRoot}/../deps/xfy_linux_iat"
