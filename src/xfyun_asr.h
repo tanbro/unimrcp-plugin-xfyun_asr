@@ -111,7 +111,7 @@ typedef struct _session_t {
     mpf_activity_detector_t* detector;
     ////
     /** xfyun 听写 session id */
-    const char* iat_session_id;
+    char* iat_session_id;
     /** wav 识别缓冲 */
     apr_queue_t* wav_queue;
     /** xfyun 的 session 参数 */

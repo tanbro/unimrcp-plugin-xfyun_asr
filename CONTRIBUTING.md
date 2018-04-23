@@ -61,6 +61,32 @@
     sudo ./build-dep-libs.sh
     ```
 
+## 获取代码
+
+1. git 下载
+
+    ```sh
+    cd path/of/workspace
+    git clone git@bitbucket.org:hesong-core-team/unimrcp-plugin-xfyun_asr.git xfyun_asr
+    ```
+
+1. 其它方法获得代码文件，复制到工作目录下的`xfyun_asr`子目录
+
+## 构建
+
+这个项目使用 [CMake] 进行构建。
+
+在项目目录新建一个名为`build`的子目录，专门用于构建。
+然后在这个目录中使用[CMake]进行构建:
+
+```sh
+cd path/of/workspace/xfyun_asr
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
 [CMake]: https://cmake.org/
 [uniMRCP]: http://unimrcp.org/
 [xfyun]: http://www.xfyun.cn/

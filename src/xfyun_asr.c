@@ -212,7 +212,6 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
                               const mpf_frame_t* frame) {
     session_t* sess = (session_t*)stream->obj;
     mrcp_engine_channel_t* channel = sess->channel;
-    const char* iat_session_id = sess->iat_session_id;
 
     if (sess->stop_response) {
         /* send asynchronous response to STOP request */
@@ -435,15 +434,6 @@ apt_bool_t on_recog_stop(session_t* sess,
                   channel->id.buf, status, errstr);
         return FALSE;
     }
-
-    // 停止语音会话
-    int errcode = QISRSessionEnd(sess->iat_session_id, NULL);
-    if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[on_recog_stop] [%s] QISRSessionEnd(%s) failed! error code: %d",
-            channel->id.buf, sess->iat_session_id, errcode);
-    }
-
     return TRUE;
 }
 
@@ -451,38 +441,36 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     int errcode = MSP_SUCCESS;
     session_t* sess = (session_t*)arg;
     mrcp_engine_channel_t* channel = sess->channel;
-    const char* iat_session_id = sess->iat_session_id;
 
     LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
 
-    sess->iat_session_id =
+    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin()", channel->id.buf);
+    const char* iat_session_id =
         QISRSessionBegin(NULL, sess->iat_begin_params,
                          &errcode);  //听写不需要语法，第一个参数为NULL
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[on_recog_start] [%s] QISRSessionBegin failed! error code: "
+            "[recog_thread_func] [%s] QISRSessionBegin failed! error code: "
             "%d",
             channel->id.buf, errcode);
         return FALSE;
     }
-    LOG_DEBUG("[on_recog_start] [%s] QISRSessionBegin -> %s", channel->id.buf,
-              sess->iat_session_id);
+    sess->iat_session_id = (char*)apr_pcalloc(channel->pool, NAME_MAX);
+    strncpy(sess->iat_session_id, iat_session_id, NAME_MAX);
+    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
+              channel->id.buf, iat_session_id);
 
-    char file_name[PATH_MAX] = {0};
-    snprintf(file_name, PATH_MAX, "%s.wav", channel->id.buf);
-    sess->rec_file = fopen(file_name, "wb");
+    char rec_file[PATH_MAX] = {0};
+    snprintf(rec_file, PATH_MAX, "%s.wav", channel->id.buf);
+    sess->rec_file = fopen(rec_file, "wb");
 
     ///
-
-    char* buf = NULL;
-    unsigned buf_len = 0;
 
     // 调用【讯飞云】听写 API
     unsigned int total_len = 0;
     int aud_stat = MSP_AUDIO_SAMPLE_CONTINUE;  //音频状态
     int ep_stat = MSP_EP_LOOKING_FOR_SPEECH;   //端点检测
     int rec_stat = MSP_REC_STATUS_SUCCESS;     //识别状态
-    int errcode = MSP_SUCCESS;
 
     bool is_terminated = false;
 
@@ -510,8 +498,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
         }
 
         if (wav_obj) {
-            buf = wav_obj->data;
-            buf_len = wav_obj->len;
+            char* buf = wav_obj->data;
+            unsigned buf_len = wav_obj->len;
 
             fwrite(buf, 1, buf_len, sess->rec_file);
             fflush(sess->rec_file);
@@ -548,7 +536,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 LOG_DEBUG(
                     "[recog_thread_func] [%s] QISRGetResult(%s) 部分识别结果: "
                     "%s",
-                    channel->id.buf, iat_session_id, errcode, rslt);
+                    channel->id.buf, iat_session_id, rslt);
             }
         }
 
@@ -600,10 +588,21 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                     "[recog_thread_func] [%s] QISRGetResult(%s) "
                     "最后部分识别结果: "
                     "%s",
-                    channel->id.buf, iat_session_id, errcode, rslt);
+                    channel->id.buf, iat_session_id, rslt);
             }
             usleep(150 * 1000);  //防止频繁占用CPU
         }
+    }
+
+    // 停止语音会话
+    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin(%s)", channel->id.buf,
+              iat_session_id);
+    errcode = QISRSessionEnd(iat_session_id, NULL);
+    if (MSP_SUCCESS != errcode) {
+        LOG_ERROR(
+            "[recog_thread_func] [%s] QISRSessionEnd(%s) failed! error code: "
+            "%d",
+            channel->id.buf, iat_session_id, errcode);
     }
 
     LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
