@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/sysinfo.h>
+#include <unistd.h>
 
 // unimrcp plugin requires includes
 #include "apt_consumer_task.h"
@@ -40,9 +40,17 @@
 #include "msp_errors.h"
 #include "qisr.h"
 
+#define TASK_NAME "XFYUN ASR Engine"
+
 #define ERRSTR_SZ 256
 
-#define TASK_NAME "XFYUN ASR Engine"
+/**
+ * 每个识别会话的流媒体缓冲 QUEUE 中，放这个对象
+ */
+typedef struct _wav_que_obj_t {
+    void* data;
+    apr_size_t len;
+} wav_que_obj_t;
 
 /**
  * The resource engine plugin must declare its version number by using the
@@ -225,6 +233,8 @@ static apt_bool_t on_recog_start_input_timers(session_t* sess,
 static apt_bool_t on_recog_stop(session_t* sess,
                                 mrcp_message_t* request,
                                 mrcp_message_t* response);
+
+static void* recog_thread_func(apr_thread_t*, void*);
 
 /** 全局变量 */
 
