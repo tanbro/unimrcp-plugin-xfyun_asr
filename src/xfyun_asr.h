@@ -96,6 +96,8 @@ typedef struct _session_t {
     /** Voice activity detector */
     mpf_activity_detector_t* detector;
     ////
+    /** xfyun 听写 session id */
+    const char* iat_session_id;
 } session_t;
 
 typedef enum {
@@ -207,5 +209,15 @@ static apt_bool_t task_msg_process(apt_task_t* task, apt_task_msg_t* msg);
 static apt_bool_t on_channel_open(session_t* sess);
 static void on_channel_close(session_t* sess);
 static void on_channel_request(session_t* sess, mrcp_message_t* request);
+
+static apt_bool_t on_recog_start(session_t* sess,
+                                 mrcp_message_t* request,
+                                 mrcp_message_t* response);
+static apt_bool_t on_recog_start_input_timers(session_t* sess,
+                                              mrcp_message_t* request,
+                                              mrcp_message_t* response);
+static apt_bool_t on_recog_stop(session_t* sess,
+                                mrcp_message_t* request,
+                                mrcp_message_t* response);
 
 #endif

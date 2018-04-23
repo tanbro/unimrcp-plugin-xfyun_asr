@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
+
+# project
 project(xfyun_asr VERSION 0.0.0)
 
 # pkg-config 是必须的!
@@ -21,6 +23,16 @@ include_directories(${SRC_ROOT_DIR})
 add_library(${PROJECT_NAME} SHARED
     ${SRC_ROOT_DIR}/xfyun_asr.c
 )
+
+# version
+target_compile_definitions (${PROJECT_NAME} PUBLIC VERSION_STRING=${GIT_COMMIT_ID})
+# gcc version
+target_compile_definitions (${PROJECT_NAME} PUBLIC COMPILER_STRING=${COMPILER_VERSION})
+
+# build-out shared object file name
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "xfyun-asr")
+
 
 # uniMRCP
 IF(NOT DEFINED ENV{UNIMRCP_SRC_DIR})
