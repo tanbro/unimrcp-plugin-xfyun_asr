@@ -5,6 +5,19 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
                MAKE_STR(VERSION_STRING), MAKE_STR(COMPILER_STRING), __TIME__,
                __DATE__);
 
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
+    // TODO: 线程池的大小设置
+    apr_thread_pool_create(&thread_pool, get_nprocs(), get_nprocs() * 5, pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[mrcp_plugin_create] apr_thread_pool_create failed. error [%d] %s",
+            status, errstr);
+        return NULL;
+    }
+
     engine_object_t* engine_object =
         (engine_object_t*)apr_palloc(pool, sizeof(engine_object_t));
     apt_task_t* task;
@@ -51,6 +64,18 @@ apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
         apt_task_destroy(task);
         obj->task = NULL;
     }
+
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
+    // TODO: 线程池的大小设置
+    apr_thread_pool_destroy(thread_pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR("[apt_bool_t] apr_thread_pool_destroy failed. error [%d] %s",
+                  status, errstr);
+    }
+
     return TRUE;
 }
 
@@ -102,10 +127,10 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     sess->iat_session_id = NULL;
 
     apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
 
     // TODO: 最大缓冲数量到底要设置为多少？
     status = apr_queue_create(&sess->wav_queue, 8192, pool);
-    char errstr[ERRSTR_SZ] = {0};
 
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);

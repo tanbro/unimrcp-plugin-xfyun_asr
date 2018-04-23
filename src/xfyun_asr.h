@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/sysinfo.h>
 
 // unimrcp plugin requires includes
 #include "apt_consumer_task.h"
@@ -32,6 +33,7 @@
 #include "apr.h"
 #include "apr_file_info.h"
 #include "apr_queue.h"
+#include "apr_thread_pool.h"
 
 // 讯飞 MSC SDK
 #include "msp_cmn.h"
@@ -39,7 +41,6 @@
 #include "qisr.h"
 
 #define ERRSTR_SZ 256
-
 
 #define TASK_NAME "XFYUN ASR Engine"
 
@@ -224,5 +225,9 @@ static apt_bool_t on_recog_start_input_timers(session_t* sess,
 static apt_bool_t on_recog_stop(session_t* sess,
                                 mrcp_message_t* request,
                                 mrcp_message_t* response);
+
+/** 全局变量 */
+
+static apr_thread_pool_t* thread_pool = NULL;
 
 #endif
