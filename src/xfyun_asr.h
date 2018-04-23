@@ -15,6 +15,7 @@
 #endif
 ///////////////////////////
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +44,7 @@
 #define TASK_NAME "XFYUN ASR Engine"
 
 #define ERRSTR_SZ 256
+#define IAT_BEGIN_PARAMS_LEN 2048
 
 /**
  * 每个识别会话的流媒体缓冲 QUEUE 中，放这个对象
@@ -112,6 +114,9 @@ typedef struct _session_t {
     const char* iat_session_id;
     /** wav 识别缓冲 */
     apr_queue_t* wav_queue;
+    /** xfyun 的 session 参数 */
+    char* iat_begin_params;
+    FILE* rec_file;
 } session_t;
 
 typedef enum {

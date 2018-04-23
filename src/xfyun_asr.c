@@ -125,6 +125,7 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
 
     // TODO: 初始化 Session 数据
     sess->iat_session_id = NULL;
+    sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
 
     apr_status_t status = APR_SUCCESS;
     char errstr[ERRSTR_SZ] = {0};
@@ -281,7 +282,7 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
     }
 
     // 准备这一块音频流，写到处理缓冲
-    // 假定都是 8k sample-rate, 16 bit/sec 的 LPCM
+    // 假定都是 PCM S8 LE
     wav_que_obj_t* wav_obj =
         (wav_que_obj_t*)apr_pcalloc(channel->pool, sizeof(wav_que_obj_t));
     wav_obj->data = frame->codec_frame.buffer;
@@ -343,15 +344,7 @@ apt_bool_t on_channel_open(session_t* sess) {
     return TRUE;
 }
 
-void on_channel_close(session_t* sess) {
-    mrcp_engine_channel_t* channel = sess->channel;
-    int errcode = QISRSessionEnd(sess->iat_session_id, NULL);
-    if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[on_channel_close] [%s] QISRSessionEnd(%s) failed! error code: %d",
-            channel->id.buf, sess->iat_session_id, errcode);
-    }
-}
+void on_channel_close(session_t* sess) {}
 
 void on_channel_request(session_t* sess, mrcp_message_t* request) {
     mrcp_engine_channel_t* channel = sess->channel;
@@ -391,22 +384,10 @@ apt_bool_t on_recog_start(session_t* sess,
     LOG_DEBUG("[on_recog_start] [%s]", channel->id.buf);
 
     // 开始一个语音会话
-    int errcode = MSP_SUCCESS;
     const char* session_begin_params =
         "sub = iat, domain = iat, language = zh_cn, accent = mandarin, "
         "sample_rate = 8000, result_type = plain, result_encoding = utf8";
-    sess->iat_session_id =
-        QISRSessionBegin(NULL, session_begin_params,
-                         &errcode);  //听写不需要语法，第一个参数为NULL
-    if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[on_recog_start] [%s] QISRSessionBegin failed! error code: "
-            "%d",
-            channel->id.buf, errcode);
-        return FALSE;
-    }
-    LOG_DEBUG("[on_recog_start] [%s] QISRSessionBegin -> %s", channel->id.buf,
-              sess->iat_session_id);
+    strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
 
     // 启动会话处理线程
     apr_status_t status = APR_SUCCESS;
@@ -442,18 +423,59 @@ apt_bool_t on_recog_stop(session_t* sess,
      * send the response */
     sess->stop_response = response;
 
-    // TODO: 如果还在识别中，就得停止
+    // TODO: 如果还在识别中，就得停止。如果不是在识别，当心强行停止出问题！
+
+    // 打断流媒体缓冲处理队列
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+    status = apr_queue_term(sess->wav_queue);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR("[on_recog_stop] [%s] apr_queue_term failed. error [%d] %s",
+                  channel->id.buf, status, errstr);
+        return FALSE;
+    }
+
+    // 停止语音会话
+    int errcode = QISRSessionEnd(sess->iat_session_id, NULL);
+    if (MSP_SUCCESS != errcode) {
+        LOG_ERROR(
+            "[on_recog_stop] [%s] QISRSessionEnd(%s) failed! error code: %d",
+            channel->id.buf, sess->iat_session_id, errcode);
+    }
 
     return TRUE;
 }
 
 void* recog_thread_func(apr_thread_t* thread, void* arg) {
+    int errcode = MSP_SUCCESS;
     session_t* sess = (session_t*)arg;
     mrcp_engine_channel_t* channel = sess->channel;
     const char* iat_session_id = sess->iat_session_id;
 
-    char* dst_buf = NULL;
-    size_t dst_buf_sz = 0;
+    LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
+
+    sess->iat_session_id =
+        QISRSessionBegin(NULL, sess->iat_begin_params,
+                         &errcode);  //听写不需要语法，第一个参数为NULL
+    if (MSP_SUCCESS != errcode) {
+        LOG_ERROR(
+            "[on_recog_start] [%s] QISRSessionBegin failed! error code: "
+            "%d",
+            channel->id.buf, errcode);
+        return FALSE;
+    }
+    LOG_DEBUG("[on_recog_start] [%s] QISRSessionBegin -> %s", channel->id.buf,
+              sess->iat_session_id);
+
+    char file_name[PATH_MAX] = {0};
+    snprintf(file_name, PATH_MAX, "%s.wav", channel->id.buf);
+    sess->rec_file = fopen(file_name, "wb");
+
+    ///
+
+    char* buf = NULL;
+    unsigned buf_len = 0;
 
     // 调用【讯飞云】听写 API
     unsigned int total_len = 0;
@@ -462,57 +484,129 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     int rec_stat = MSP_REC_STATUS_SUCCESS;     //识别状态
     int errcode = MSP_SUCCESS;
 
-    // 上传！
+    bool is_terminated = false;
 
-    errcode = QISRAudioWrite(iat_session_id, dst_buf, dst_buf_sz, aud_stat,
+    // 上传！
+    while (true) {
+        // POP 流媒体数据
+        // 如果 queue 已经空，将 BLOCK!!!
+        wav_que_obj_t* wav_obj = NULL;
+        apr_status_t status = APR_SUCCESS;
+        char errstr[ERRSTR_SZ] = {0};
+        status = apr_queue_pop(sess->wav_queue, (void**)&wav_obj);
+        if (APR_EOF == status) {
+            // 被打断
+            is_terminated = true;
+            LOG_DEBUG("[recog_thread_func] [%s] terminated", channel->id.buf);
+            break;
+        }
+        if (APR_SUCCESS != status) {
+            apr_strerror(status, errstr, ERRSTR_SZ);
+            LOG_ERROR(
+                "[recog_thread_func] [%s] apr_queue_pop failed. error [%d] "
+                "%s",
+                channel->id.buf, status, errstr);
+            break;
+        }
+
+        if (wav_obj) {
+            buf = wav_obj->data;
+            buf_len = wav_obj->len;
+
+            fwrite(buf, 1, buf_len, sess->rec_file);
+            fflush(sess->rec_file);
+
+            // 上传到讯飞云，进行识别
+            //  LOG_DEBUG("[recog_thread_func] [%s] QISRAudioWrite %d bytes:
+            //  %p", channel->id.buf, buf, buf_len);
+            errcode = QISRAudioWrite(iat_session_id, buf, buf_len, aud_stat,
+                                     &ep_stat, &rec_stat);
+            if (MSP_SUCCESS != errcode) {
+                LOG_ERROR(
+                    "[recog_thread_func] [%s] QISRAudioWrite(%s) failed! error "
+                    "code: "
+                    "%d",
+                    channel->id.buf, iat_session_id, errcode);
+                break;
+            }
+        }
+
+        // 如果已经有部分听写结果
+        if (MSP_REC_STATUS_SUCCESS == rec_stat) {
+            const char* rslt =
+                QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
+            if (MSP_SUCCESS != errcode) {
+                LOG_ERROR(
+                    "[recog_thread_func] [%s] QISRGetResult(%s) failed!"
+                    " error code: %d",
+                    channel->id.buf, iat_session_id, errcode);
+                break;
+            }
+            if (NULL != rslt) {
+                // 识别出来了部分结果
+                // TODO: 记录下来！
+                LOG_DEBUG(
+                    "[recog_thread_func] [%s] QISRGetResult(%s) 部分识别结果: "
+                    "%s",
+                    channel->id.buf, iat_session_id, errcode, rslt);
+            }
+        }
+
+        if (MSP_EP_AFTER_SPEECH == ep_stat) {
+            // 说完了。退出读缓冲的循环
+            LOG_DEBUG(
+                "[recog_thread_func] [%s] (%s) MSPepState=MSP_EP_AFTER_SPEECH",
+                channel->id.buf, iat_session_id);
+            break;
+        }
+    }
+
+    fclose(sess->rec_file);
+
+    // 上传一个空音频块，表示音频流结束
+    LOG_DEBUG("[recog_thread_func] [%s] (%s) 结束语音上传", channel->id.buf,
+              iat_session_id);
+    errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
                              &ep_stat, &rec_stat);
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[recog_thread_func] [%s] QISRAudioWrite(%s) failed! error code: "
-            "%d",
+            "[recog_thread_func] [%s] QISRAudioWrite(%s) failed for "
+            "MSP_AUDIO_SAMPLE_LAST!"
+            " error code: %d",
             channel->id.buf, iat_session_id, errcode);
-        return NULL;
     }
 
-    // 如果已经有部分听写结果
-    if (MSP_REC_STATUS_SUCCESS == rec_stat) {
-        const char* rslt =
-            QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
-        if (MSP_SUCCESS != errcode) {
-            LOG_ERROR(
-                "[recog_thread_func] [%s] QISRGetResult(%s) failed!"
-                " error code: %d",
-                channel->id.buf, iat_session_id, errcode);
-            return NULL;
-        }
-        if (NULL != rslt) {
-            // 识别出来了部分结果
-            // TODO: 记录下来！
-            LOG_DEBUG(
-                "[recog_thread_func] [%s] QISRGetResult(%s) 部分识别结果: %s",
-                channel->id.buf, iat_session_id, errcode, rslt);
+    if (is_terminated) {
+        // TODO: 是被打断的，应该如何处理？
+        LOG_DEBUG("[recog_thread_func] [%s] (%s) 被打断，应该如何处理？",
+                  channel->id.buf, iat_session_id);
+    } else if (MSP_EP_AFTER_SPEECH == ep_stat) {
+        // 说完了，但是还要继续接收结果
+        // 继续接收结果，直到完成
+        while (MSP_REC_STATUS_COMPLETE != rec_stat) {
+            const char* rslt =
+                QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
+            if (MSP_SUCCESS != errcode) {
+                LOG_ERROR(
+                    "[recog_thread_func] [%s] QISRGetResult(%s) failed!"
+                    " error code: %d",
+                    channel->id.buf, iat_session_id, errcode);
+                break;
+            }
+            if (NULL != rslt) {
+                // 识别出来了最后一个部分结果
+                // TODO: 记录下来！
+                LOG_DEBUG(
+                    "[recog_thread_func] [%s] QISRGetResult(%s) "
+                    "最后部分识别结果: "
+                    "%s",
+                    channel->id.buf, iat_session_id, errcode, rslt);
+            }
+            usleep(150 * 1000);  //防止频繁占用CPU
         }
     }
 
-    // 如果说完了 (Speech 开始了，然后这里结束)
-    if (MSP_EP_AFTER_SPEECH == ep_stat) {
-        // 一次识别结束。上传一个空音频块，表示音频流结束
-        LOG_DEBUG("[recog_thread_func] [%s] (%s) 此次语音结束", channel->id.buf,
-                  iat_session_id);
-        errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
-                                 &ep_stat, &rec_stat);
-        if (MSP_SUCCESS != errcode) {
-            LOG_ERROR(
-                "[recog_thread_func] [%s] QISRAudioWrite(%s) failed for "
-                "MSP_AUDIO_SAMPLE_LAST!"
-                " error code: %d",
-                channel->id.buf, iat_session_id, errcode);
-            return NULL;
-        }
-
-        // TODO:
-        // 启动一个过程——继续接收剩下的识别结果，直到接收完毕！考虑在线程池中执行。
-    }
+    LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
 
     return NULL;
 }
