@@ -455,14 +455,11 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             channel->id.buf, errcode);
         return FALSE;
     }
-    sess->iat_session_id = (char*)apr_pcalloc(channel->pool, NAME_MAX);
-    strncpy(sess->iat_session_id, iat_session_id, NAME_MAX);
+    sess->iat_session_id =
+        (char*)apr_pcalloc(channel->pool, IAT_SESSION_ID_LEN);
+    strncpy(sess->iat_session_id, iat_session_id, IAT_SESSION_ID_LEN);
     LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
               channel->id.buf, iat_session_id);
-
-    char rec_file[PATH_MAX] = {0};
-    snprintf(rec_file, PATH_MAX, "%s.wav", channel->id.buf);
-    sess->rec_file = fopen(rec_file, "wb");
 
     ///
 
@@ -500,9 +497,6 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
         if (wav_obj) {
             char* buf = wav_obj->data;
             unsigned buf_len = wav_obj->len;
-
-            fwrite(buf, 1, buf_len, sess->rec_file);
-            fflush(sess->rec_file);
 
             // 上传到讯飞云，进行识别
             //  LOG_DEBUG("[recog_thread_func] [%s] QISRAudioWrite %d bytes:
@@ -548,8 +542,6 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             break;
         }
     }
-
-    fclose(sess->rec_file);
 
     // 上传一个空音频块，表示音频流结束
     LOG_DEBUG("[recog_thread_func] [%s] (%s) 结束语音上传", channel->id.buf,

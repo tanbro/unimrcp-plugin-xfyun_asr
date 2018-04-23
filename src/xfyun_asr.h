@@ -44,6 +44,7 @@
 #define TASK_NAME "XFYUN ASR Engine"
 
 #define ERRSTR_SZ 256
+#define IAT_SESSION_ID_LEN 64
 #define IAT_BEGIN_PARAMS_LEN 2048
 
 /**
@@ -116,7 +117,6 @@ typedef struct _session_t {
     apr_queue_t* wav_queue;
     /** xfyun 的 session 参数 */
     char* iat_begin_params;
-    FILE* rec_file;
 } session_t;
 
 typedef enum {
