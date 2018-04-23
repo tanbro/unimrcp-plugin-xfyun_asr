@@ -58,11 +58,13 @@ apt_bool_t plugin_open(mrcp_engine_t* engine) {
     LOG_NOTICE("[plugin_open]");
 
     const char* login_params =
-        "appid = 58cb86b4, work_dir = .";  // 登录参数，appid与msc库绑定,请勿随意改动
+        "appid = 5acb316c, work_dir = .";  // 登录参数，appid与msc库绑定,请勿随意改动
 
-    int ret = MSPLogin(NULL, NULL, login_params);
-    if (MSP_SUCCESS != ret) {
-        LOG_ERROR("[plugin_open] MSPLogin failed, error %d", ret);
+    LOG_INFO("[plugin_open] MSPLogin(%s)", login_params);
+    int errcode = MSPLogin(NULL, NULL, login_params);
+    if (MSP_SUCCESS != errcode) {
+        LOG_ERROR("[plugin_open] MSPLogin(%s) failed, error %d", login_params,
+                  errcode);
         return FALSE;
     }
 
@@ -79,7 +81,7 @@ apt_bool_t plugin_close(mrcp_engine_t* engine) {
 
     int ret = MSPLogout();
     if (MSP_SUCCESS != ret) {
-        LOG_WARNING("[plugin_open] MSPLogout failed, error %d", ret);
+        LOG_ERROR("[plugin_open] MSPLogout failed, error %d", ret);
     }
 
     engine_object_t* obj = (engine_object_t*)engine->obj;
@@ -98,6 +100,19 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
 
     // TODO: 初始化 Session 数据
     sess->iat_session_id = NULL;
+
+    apr_status_t status = APR_SUCCESS;
+
+    // TODO: 最大缓冲数量到底要设置为多少？
+    status = apr_queue_create(&sess->wav_queue, 8192, pool);
+    char errstr[ERRSTR_SZ] = {0};
+
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR("[channel_create] apr_queue_create failed. error [%d] %s",
+                  status, errstr);
+        return NULL;
+    }
 
     /// stream 设置
     mpf_stream_capabilities_t* capabilities;
@@ -175,7 +190,8 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
 
     if (sess->stop_response) {
         /* send asynchronous response to STOP request */
-        LOG_DEBUG("[%s]: stream_wirte_frame: stop_response", channel->id.buf);
+        LOG_DEBUG("[stream_write_frame] [%s] stream_wirte_frame: stop_response",
+                  channel->id.buf);
         mrcp_engine_channel_message_send(channel, sess->stop_response);
         sess->stop_response = NULL;
         sess->recog_request = NULL;
@@ -188,7 +204,7 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
         switch (det_event) {
             case MPF_DETECTOR_EVENT_ACTIVITY:
                 LOG_DEBUG(
-                    "[stream_write_frame] [%s]: MPF: voice ACTIVITY event "
+                    "[stream_write_frame] [%s] MPF: voice ACTIVITY event "
                     "occurred. " APT_SIDRES_FMT,
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf);
                 // TODO: 输入开始
@@ -196,7 +212,7 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
                 break;
             case MPF_DETECTOR_EVENT_INACTIVITY:
                 LOG_DEBUG(
-                    "[stream_write_frame] [%s]: MPF: voice IN-ACTIVITY event "
+                    "[stream_write_frame] [%s] MPF: voice IN-ACTIVITY event "
                     "occurred. " APT_SIDRES_FMT,
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf);
                 // TODO: 输入完成
@@ -205,7 +221,7 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
                 break;
             case MPF_DETECTOR_EVENT_NOINPUT:
                 LOG_DEBUG(
-                    "[stream_write_frame] [%s]: MPF: NO-INPUT event "
+                    "[stream_write_frame] [%s] MPF: NO-INPUT event "
                     "occurred. " APT_SIDRES_FMT,
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf);
                 // TODO: 输入超时
@@ -225,13 +241,13 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
         if ((frame->type & MEDIA_FRAME_TYPE_EVENT) == MEDIA_FRAME_TYPE_EVENT) {
             if (frame->marker == MPF_MARKER_START_OF_EVENT) {
                 LOG_DEBUG(
-                    "[stream_write_frame] [%s]: MRCP MPF: Detected Start of "
+                    "[stream_write_frame] [%s] MRCP MPF: Detected Start of "
                     "Event " APT_SIDRES_FMT " id:%d",
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf,
                     frame->event_frame.event_id);
             } else if (frame->marker == MPF_MARKER_END_OF_EVENT) {
                 LOG_DEBUG(
-                    "[stream_write_frame] [%s]: MRCP MPF: Detected End of "
+                    "[stream_write_frame] [%s] MRCP MPF: Detected End of "
                     "Event " APT_SIDRES_FMT " id:%d duration:%d ts",
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf,
                     frame->event_frame.event_id, frame->event_frame.duration);
@@ -253,11 +269,12 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
     int errcode = MSP_SUCCESS;
 
     // 上传！
+
     errcode = QISRAudioWrite(iat_session_id, dst_buf, dst_buf_sz, aud_stat,
                              &ep_stat, &rec_stat);
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[stream_write_frame] [%s]: QISRAudioWrite(%s) failed! error code: "
+            "[stream_write_frame] [%s] QISRAudioWrite(%s) failed! error code: "
             "%d",
             channel->id.buf, iat_session_id, errcode);
         return FALSE;
@@ -269,7 +286,7 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
             QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
         if (MSP_SUCCESS != errcode) {
             LOG_ERROR(
-                "[stream_write_frame] [%s]: QISRGetResult(%s) failed!"
+                "[stream_write_frame] [%s] QISRGetResult(%s) failed!"
                 " error code: %d",
                 channel->id.buf, iat_session_id, errcode);
             return FALSE;
@@ -277,21 +294,22 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
         if (NULL != rslt) {
             // 识别出来了部分结果
             // TODO: 记录下来！
-            LOG_DEBUG("[stream_write_frame] [%s]: QISRGetResult(%s): %s",
-                      channel->id.buf, iat_session_id, errcode, rslt);
+            LOG_DEBUG(
+                "[stream_write_frame] [%s] QISRGetResult(%s) 部分识别结果: %s",
+                channel->id.buf, iat_session_id, errcode, rslt);
         }
     }
 
     // 如果说完了 (Speech 开始了，然后这里结束)
     if (MSP_EP_AFTER_SPEECH == ep_stat) {
         // 一次识别结束。上传一个空音频块，表示音频流结束
-        LOG_DEBUG("[stream_write_frame] [%s]: (%s) 此次语音结束",
+        LOG_DEBUG("[stream_write_frame] [%s] (%s) 此次语音结束",
                   channel->id.buf, iat_session_id);
         errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
                                  &ep_stat, &rec_stat);
         if (MSP_SUCCESS != errcode) {
             LOG_ERROR(
-                "[stream_write_frame] [%s]: QISRAudioWrite(%s) failed for "
+                "[stream_write_frame] [%s] QISRAudioWrite(%s) failed for "
                 "MSP_AUDIO_SAMPLE_LAST!"
                 " error code: %d",
                 channel->id.buf, iat_session_id, errcode);

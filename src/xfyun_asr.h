@@ -31,12 +31,15 @@
 // 用到的 APR 功能
 #include "apr.h"
 #include "apr_file_info.h"
-#include "apr_xml.h"
+#include "apr_queue.h"
 
 // 讯飞 MSC SDK
 #include "msp_cmn.h"
 #include "msp_errors.h"
 #include "qisr.h"
+
+#define ERRSTR_SZ 256
+
 
 #define TASK_NAME "XFYUN ASR Engine"
 
@@ -98,6 +101,8 @@ typedef struct _session_t {
     ////
     /** xfyun 听写 session id */
     const char* iat_session_id;
+    /** wav 识别缓冲 */
+    apr_queue_t* wav_queue;
 } session_t;
 
 typedef enum {
