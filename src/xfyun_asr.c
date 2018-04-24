@@ -120,12 +120,12 @@ apt_bool_t plugin_close(mrcp_engine_t* engine) {
 mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     LOG_INFO("[channel_create]");
 
+    // 初始化 Session
     session_t* sess = (session_t*)apr_palloc(pool, sizeof(session_t));
     sess->obj = (engine_object_t*)engine->obj;
-
-    // TODO: 初始化 Session 数据
     sess->iat_session_id = NULL;
     sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
+    sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
 
     apr_status_t status = APR_SUCCESS;
     char errstr[ERRSTR_SZ] = {0};
@@ -456,19 +456,23 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             channel->id.buf, errcode);
         return FALSE;
     }
+    if (!iat_session_id) {
+        LOG_ERROR("[recog_thread_func] [%s] QISRSessionBegin failed!",
+                  channel->id.buf);
+        return FALSE;
+    }
     sess->iat_session_id =
         (char*)apr_pcalloc(channel->pool, IAT_SESSION_ID_LEN);
     strncpy(sess->iat_session_id, iat_session_id, IAT_SESSION_ID_LEN);
     LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
-              channel->id.buf, iat_session_id);
+              channel->id.buf, sess->iat_session_id);
 
     ///
 
     // 调用【讯飞云】听写 API
     unsigned int total_len = 0;
-    int aud_stat = MSP_AUDIO_SAMPLE_CONTINUE;  //音频状态
-    int ep_stat = MSP_EP_LOOKING_FOR_SPEECH;   //端点检测
-    int rec_stat = MSP_REC_STATUS_SUCCESS;     //识别状态
+    int ep_stat = MSP_EP_LOOKING_FOR_SPEECH;  //端点检测
+    int rec_stat = MSP_REC_STATUS_SUCCESS;    //识别状态
 
     bool is_terminated = false;
 
@@ -496,20 +500,14 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
         }
 
         if (wav_obj) {
-            char* buf = wav_obj->data;
-            unsigned buf_len = wav_obj->len;
-
             // 上传到讯飞云，进行识别
-            //  LOG_DEBUG("[recog_thread_func] [%s] QISRAudioWrite %d bytes:
-            //  %p", channel->id.buf, buf, buf_len);
-            errcode = QISRAudioWrite(iat_session_id, buf, buf_len, aud_stat,
-                                     &ep_stat, &rec_stat);
+            errcode =
+                QISRAudioWrite(iat_session_id, wav_obj->data, wav_obj->len,
+                               MSP_AUDIO_SAMPLE_CONTINUE, &ep_stat, &rec_stat);
             if (MSP_SUCCESS != errcode) {
                 LOG_ERROR(
                     "[recog_thread_func] [%s] (%s) QISRAudioWrite failed! "
-                    "error "
-                    "code: "
-                    "%d",
+                    "error code: %d",
                     channel->id.buf, iat_session_id, errcode);
                 break;
             }
@@ -527,34 +525,33 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 break;
             }
             if (NULL != rslt) {
-                // 识别出来了部分结果
-                // TODO: 记录下来！
+                // 识别出来了部分结果。记录下来！
                 LOG_DEBUG(
-                    "[recog_thread_func] [%s] (%s) "
-                    "MSPepState=MSP_REC_STATUS_SUCCESS: %s",
+                    "[recog_thread_func] [%s] (%s) MSP_REC_STATUS_SUCCESS: %s",
                     channel->id.buf, iat_session_id, rslt);
+                strncat(sess->iat_result, rslt,
+                        IAT_RESULT_STR_LEN - strlen(sess->iat_result));
             }
         }
 
         if (MSP_EP_AFTER_SPEECH == ep_stat) {
             // 说完了。退出读缓冲的循环
-            LOG_DEBUG(
-                "[recog_thread_func] [%s] (%s) MSPepState=MSP_EP_AFTER_SPEECH",
-                channel->id.buf, iat_session_id);
+            LOG_DEBUG("[recog_thread_func] [%s] (%s) MSP_EP_AFTER_SPEECH",
+                      channel->id.buf, iat_session_id);
             break;
         }
     }
 
     // 上传一个空音频块，表示音频流结束
-    LOG_DEBUG("[recog_thread_func] [%s] (%s) 结束语音上传", channel->id.buf,
-              iat_session_id);
+    LOG_DEBUG(
+        "[recog_thread_func] [%s] (%s) QISRAudioWrite MSP_AUDIO_SAMPLE_LAST",
+        channel->id.buf, iat_session_id);
     errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
                              &ep_stat, &rec_stat);
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[recog_thread_func] [%s] (%s) QISRAudioWrite failed for "
-            "MSP_AUDIO_SAMPLE_LAST!"
-            " error code: %d",
+            "[recog_thread_func] [%s] (%s) QISRAudioWrite failed for  "
+            "MSP_AUDIO_SAMPLE_LAST! error code: %d",
             channel->id.buf, iat_session_id, errcode);
     }
 
@@ -576,12 +573,12 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 break;
             }
             if (NULL != rslt) {
-                // 识别出来了最后一个部分结果
-                // TODO: 记录下来！
+                // 识别出来了最后一个部分结果。记录下来！
                 LOG_DEBUG(
-                    "[recog_thread_func] [%s] (%s) QISRGetResult "
-                    "rec_stat=MSP_REC_STATUS_COMPLETE: %s",
+                    "[recog_thread_func] [%s] (%s) MSP_REC_STATUS_COMPLETE: %s",
                     channel->id.buf, iat_session_id, rslt);
+                strncat(sess->iat_result, rslt,
+                        IAT_RESULT_STR_LEN - strlen(sess->iat_result));
             }
             usleep(150 * 1000);  //防止频繁占用CPU
         }

@@ -46,6 +46,7 @@
 #define ERRSTR_SZ 256
 #define IAT_SESSION_ID_LEN 64
 #define IAT_BEGIN_PARAMS_LEN 2048
+#define IAT_RESULT_STR_LEN 2048
 
 /**
  * 每个识别会话的流媒体缓冲 QUEUE 中，放这个对象
@@ -117,6 +118,8 @@ typedef struct _session_t {
     apr_queue_t* wav_queue;
     /** xfyun 的 session 参数 */
     char* iat_begin_params;
+    /** xfyun 语音听写结果*/
+    char* iat_result;
 } session_t;
 
 typedef enum {
