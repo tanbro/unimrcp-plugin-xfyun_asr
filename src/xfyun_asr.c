@@ -483,22 +483,34 @@ apt_bool_t on_recog_start(session_t* sess,
     }
 
     // 等待会话处理线程启动
+    LOG_DEBUG("[on_recog_start] [%s] recog_thread_func starting ...",
+              channel->id.buf);
     status = apr_thread_mutex_lock(sess->started_mutex);
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_mutex_lock failed. error [%d] "
+            "[on_recog_start] [%s] apr_thread_mutex_lock failed for "
+            "started_mutex. error [%d] "
             "%s",
             channel->id.buf, status, errstr);
         return FALSE;
     }
-    LOG_DEBUG("[on_recog_start] [%s] recog_thread_func starting ...",
-              channel->id.buf);
     status = apr_thread_cond_wait(sess->started_cond, sess->started_mutex);
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_cond_wait failed. error [%d] %s",
+            "[on_recog_start] [%s] apr_thread_cond_wait failed started_cond. "
+            "error [%d] %s",
+            channel->id.buf, status, errstr);
+        return FALSE;
+    }
+    status = apr_thread_mutex_unlock(sess->started_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[on_recog_start] [%s] apr_thread_mutex_unlock failed for "
+            "started_mutex. error [%d] "
+            "%s",
             channel->id.buf, status, errstr);
         return FALSE;
     }
@@ -739,7 +751,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
 
     // 设置结束标志
     status = apr_thread_mutex_lock(sess->stopped_mutex);
-    if (APR_SUCCESS != errcode) {
+    if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_CRITICAL(
             "[recog_thread_func] [%s] apr_thread_mutex_lock failed for "
@@ -750,7 +762,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     }
     sess->iat_complted = true;
     status = apr_thread_mutex_unlock(sess->stopped_mutex);
-    if (APR_SUCCESS != errcode) {
+    if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_CRITICAL(
             "[recog_thread_func] [%s] apr_thread_mutex_unlock failed for "
@@ -762,7 +774,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
 
     // 广播：执行完毕
     status = apr_thread_cond_broadcast(sess->stopped_cond);
-    if (APR_SUCCESS != errcode) {
+    if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_CRITICAL(
             "[recog_thread_func] [%s] apr_thread_cond_broadcast failed for "
@@ -780,7 +792,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
 apt_bool_t term_session(session_t* sess) {
     mrcp_engine_channel_t* channel = sess->channel;
 
-    LOG_DEBUG("[term_session] [%s]", channel->id.buf);
+    LOG_DEBUG("[term_session] [%s] >>>", channel->id.buf);
 
     apr_status_t status = APR_SUCCESS;
     char errstr[ERRSTR_SZ] = {0};
@@ -823,23 +835,36 @@ apt_bool_t term_session(session_t* sess) {
         }
 
         // 等待识别的会话处理线程结束
+        LOG_DEBUG("[term_session] [%s] recog_thread_func stopping...",
+                  channel->id.buf);
         status = apr_thread_mutex_lock(sess->stopped_mutex);
         if (APR_SUCCESS != status) {
             apr_strerror(status, errstr, ERRSTR_SZ);
             LOG_ERROR(
-                "[term_session] [%s] apr_thread_mutex_lock failed. error "
+                "[term_session] [%s] apr_thread_mutex_lock failed for "
+                "stopped_mutex. error "
                 "[%d] "
                 "%s",
                 channel->id.buf, status, errstr);
             return FALSE;
         }
-        LOG_DEBUG("[term_session] [%s] recog_thread_func stopping...",
-                  channel->id.buf);
         status = apr_thread_cond_wait(sess->stopped_cond, sess->stopped_mutex);
         if (APR_SUCCESS != status) {
             apr_strerror(status, errstr, ERRSTR_SZ);
             LOG_ERROR(
-                "[term_session] [%s] apr_thread_cond_wait failed. error "
+                "[term_session] [%s] apr_thread_cond_wait failed for "
+                "stopped_mutex. error "
+                "[%d] "
+                "%s",
+                channel->id.buf, status, errstr);
+            return FALSE;
+        }
+        status = apr_thread_mutex_unlock(sess->stopped_mutex);
+        if (APR_SUCCESS != status) {
+            apr_strerror(status, errstr, ERRSTR_SZ);
+            LOG_ERROR(
+                "[term_session] [%s] apr_thread_mutex_unlock failed for "
+                "stopped_mutex. error "
                 "[%d] "
                 "%s",
                 channel->id.buf, status, errstr);
@@ -848,6 +873,8 @@ apt_bool_t term_session(session_t* sess) {
         LOG_DEBUG("[term_session] [%s] recog_thread_func stopped.",
                   channel->id.buf);
     }
+
+    LOG_DEBUG("[term_session] [%s] <<<", channel->id.buf);
     return TRUE;
 }
 
