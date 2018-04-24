@@ -10,7 +10,7 @@
     workspace
         ├── deps
         │   ├── unimrcp-1.5.0
-        │   └── xfyun-msc-Linux_iat1166_5acb316c
+        │   └── xfy_linux_iat
         └── xfyun_asr
             ├── CMakeLists.txt
             ├── README.md
