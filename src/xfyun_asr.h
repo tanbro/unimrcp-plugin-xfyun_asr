@@ -97,6 +97,9 @@ MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
 #define LOG_EMERGENCY(fmt, ...) \
     apt_log(XFYUNASR_LOG_MARK, APT_PRIO_EMERGENCY, LOGGER fmt, ##__VA_ARGS__)
 
+/** 插件的线程池 */
+static apr_thread_pool_t* thread_pool = NULL;
+
 /** Declaration of recognizer engine object to associate */
 typedef struct _engine_object_t {
     apt_consumer_task_t* task;
@@ -116,13 +119,17 @@ typedef struct _session_t {
     apt_bool_t timers_started;
     /** Voice activity detector */
     mpf_activity_detector_t* detector;
+
     ////
     apr_thread_cond_t* started_cond;
     apr_thread_mutex_t* started_mutex;
     apr_thread_cond_t* stopped_cond;
     apr_thread_mutex_t* stopped_mutex;
+
     /** xfyun 听写 session id */
     char* iat_session_id;
+    /** xfyun 听写 过程已经结束 */
+    bool iat_complted;
     /** wav 识别缓冲 */
     apr_queue_t* wav_queue;
     /** xfyun 的 session 参数 */
@@ -253,7 +260,7 @@ static apt_bool_t on_recog_stop(session_t* sess,
 
 static void* recog_thread_func(apr_thread_t*, void*);
 
-static apr_thread_pool_t* thread_pool = NULL;
+static apt_bool_t term_session(session_t* sess);
 
 /* Raise RECOGNITION-COMPLETE event */
 static void emit_recog_result(session_t* sess,
