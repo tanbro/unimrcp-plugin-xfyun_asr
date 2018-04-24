@@ -465,8 +465,8 @@ apt_bool_t on_recog_start(session_t* sess,
 
     // 开始一个语音会话
     const char* session_begin_params =
-        "sub = iat, domain = iat, aue = raw, asr_denoise = 1, language = "
-        "zh_cn, accent = mandarin, "
+        "sub = iat, domain = iat, aue = raw, language = zh_cn, accent = "
+        "mandarin, "
         "sample_rate = 8000, result_type = plain, result_encoding = utf8";
     strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
 

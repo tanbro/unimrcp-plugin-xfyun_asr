@@ -34,6 +34,7 @@
 #include "apr.h"
 #include "apr_file_info.h"
 #include "apr_queue.h"
+#include "apr_tables.h"
 #include "apr_thread_cond.h"
 #include "apr_thread_mutex.h"
 #include "apr_thread_pool.h"
@@ -230,8 +231,15 @@ static apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
                                      const mpf_frame_t* frame);
 /** Table of audio stream virtual methods */
 static const mpf_audio_stream_vtable_t stream_vtable = {
-    stream_destroy,     NULL, NULL, NULL, stream_open_rx, stream_close_rx,
-    stream_write_frame, NULL};
+    stream_destroy,      //
+    NULL,                //
+    NULL,                //
+    NULL,                //
+    stream_open_rx,      //
+    stream_close_rx,     //
+    stream_write_frame,  //
+    NULL                 //
+};
 
 /**
  * 异步任务处理
