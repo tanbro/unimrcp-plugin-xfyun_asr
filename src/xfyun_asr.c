@@ -444,6 +444,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
 
     LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
 
+    // 开始【讯飞云】听写会话
     LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin()", channel->id.buf);
     const char* iat_session_id =
         QISRSessionBegin(NULL, sess->iat_begin_params,
@@ -505,7 +506,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                                      &ep_stat, &rec_stat);
             if (MSP_SUCCESS != errcode) {
                 LOG_ERROR(
-                    "[recog_thread_func] [%s] QISRAudioWrite(%s) failed! error "
+                    "[recog_thread_func] [%s] (%s) QISRAudioWrite failed! "
+                    "error "
                     "code: "
                     "%d",
                     channel->id.buf, iat_session_id, errcode);
@@ -519,7 +521,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
             if (MSP_SUCCESS != errcode) {
                 LOG_ERROR(
-                    "[recog_thread_func] [%s] QISRGetResult(%s) failed!"
+                    "[recog_thread_func] [%s] (%s) QISRGetResult failed!"
                     " error code: %d",
                     channel->id.buf, iat_session_id, errcode);
                 break;
@@ -528,8 +530,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 // 识别出来了部分结果
                 // TODO: 记录下来！
                 LOG_DEBUG(
-                    "[recog_thread_func] [%s] QISRGetResult(%s) 部分识别结果: "
-                    "%s",
+                    "[recog_thread_func] [%s] (%s) "
+                    "MSPepState=MSP_REC_STATUS_SUCCESS: %s",
                     channel->id.buf, iat_session_id, rslt);
             }
         }
@@ -550,7 +552,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                              &ep_stat, &rec_stat);
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[recog_thread_func] [%s] QISRAudioWrite(%s) failed for "
+            "[recog_thread_func] [%s] (%s) QISRAudioWrite failed for "
             "MSP_AUDIO_SAMPLE_LAST!"
             " error code: %d",
             channel->id.buf, iat_session_id, errcode);
@@ -568,7 +570,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
             if (MSP_SUCCESS != errcode) {
                 LOG_ERROR(
-                    "[recog_thread_func] [%s] QISRGetResult(%s) failed!"
+                    "[recog_thread_func] [%s] (%s) QISRGetResult failed!"
                     " error code: %d",
                     channel->id.buf, iat_session_id, errcode);
                 break;
@@ -577,23 +579,22 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 // 识别出来了最后一个部分结果
                 // TODO: 记录下来！
                 LOG_DEBUG(
-                    "[recog_thread_func] [%s] QISRGetResult(%s) "
-                    "最后部分识别结果: "
-                    "%s",
+                    "[recog_thread_func] [%s] (%s) QISRGetResult "
+                    "rec_stat=MSP_REC_STATUS_COMPLETE: %s",
                     channel->id.buf, iat_session_id, rslt);
             }
             usleep(150 * 1000);  //防止频繁占用CPU
         }
     }
 
-    // 停止语音会话
+    // 结束【讯飞云】听写会话
     LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin(%s)", channel->id.buf,
               iat_session_id);
     errcode = QISRSessionEnd(iat_session_id, NULL);
     if (MSP_SUCCESS != errcode) {
         LOG_ERROR(
-            "[recog_thread_func] [%s] QISRSessionEnd(%s) failed! error code: "
-            "%d",
+            "[recog_thread_func] [%s] (%s) QISRSessionEnd failed! "
+            "error code: %d",
             channel->id.buf, iat_session_id, errcode);
     }
 
