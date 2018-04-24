@@ -33,8 +33,9 @@ target_compile_definitions (${PROJECT_NAME} PUBLIC COMPILER_STRING=${COMPILER_VE
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "xfyun-asr")
 
-
+################################
 # uniMRCP
+################################
 IF(NOT DEFINED ENV{UNIMRCP_SRC_DIR})
     set(UNIMRCP_SRC_DIR "${CMAKE_HOME_DIRECTORY}/../deps/unimrcp-1.5.0")
     message("Environment variable `UNIMRCP_SRC_DIR` not defined. Consider it is ${UNIMRCP_SRC_DIR}")
@@ -53,7 +54,9 @@ set (MRCP_INCLUDE_DIRS
 )
 include_directories(${MRCP_INCLUDE_DIRS})
 
+################################
 # uniMRCP plugin dependencies:
+################################
 IF(DEFINED ENV{APR_INCLUDE_DIR})
 	set(APR_INCLUDE_DIR $ENV{APR_INCLUDE_DIR})
 	set(APRUTIL_INCLUDE_DIR $ENV{APR_INCLUDE_DIR})
@@ -68,7 +71,9 @@ set (PLUGIN_INCLUDE_DIRS
 )
 include_directories(${PLUGIN_INCLUDE_DIRS})
 
+################################
 # 讯飞 MSC SDK
+################################
 IF(NOT DEFINED ENV{MSC_SDK_DIR})
     set(MSC_SDK_DIR "${CMAKE_HOME_DIRECTORY}/../deps/xfy_linux_iat")
     message("Environment variable `MSC_SDK_DIR` not defined. Consider it is ${MSC_SDK_DIR}")
@@ -88,6 +93,20 @@ else()
 endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L${MSC_SDK_DIR}/${MSC_LIB_DIR}")
 target_link_libraries(${PROJECT_NAME} msc)
+
+
+#########################################
+# dependency of this project: libxml-2.0
+#########################################
+PKG_CHECK_MODULES(XML2 libxml-2.0)
+if (${XML2_FOUND})
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${XML2_CFLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XML2_CFLAGS}")
+    target_link_libraries(${PROJECT_NAME} ${XML2_LDFLAGS})
+else()
+    message(FATAL_ERROR "libxml-2.0 can not be found by pkg-config")
+endif()
+
 
 # CTEST
 include(CTest)

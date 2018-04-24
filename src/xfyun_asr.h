@@ -41,6 +41,9 @@
 #include "msp_errors.h"
 #include "qisr.h"
 
+// 其它依赖库的头文件
+#include <libxml/parser.h>
+
 #define TASK_NAME "XFYUN ASR Engine"
 
 #define ERRSTR_SZ 256
@@ -244,8 +247,12 @@ static apt_bool_t on_recog_stop(session_t* sess,
 
 static void* recog_thread_func(apr_thread_t*, void*);
 
-/** 全局变量 */
-
 static apr_thread_pool_t* thread_pool = NULL;
+
+/* Raise RECOGNITION-COMPLETE event */
+static void emit_recog_result(session_t* sess,
+                              mrcp_recog_completion_cause_e cause);
+
+static bool generate_nlsml_result(session_t* sess, mrcp_message_t* message);
 
 #endif

@@ -61,7 +61,8 @@
                     "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/mpf/include",
                     "${workspaceRoot}/../deps/unimrcp-1.5.0/libs/apr-toolkit/include",
                     "${workspaceRoot}/../deps/xfy_linux_iat/include",
-                    "/usr/local/apr/include/apr-1"
+                    "/usr/local/apr/include/apr-1",
+                    "/usr/include/libxml2"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

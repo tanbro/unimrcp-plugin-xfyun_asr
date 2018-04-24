@@ -123,6 +123,9 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     // 初始化 Session
     session_t* sess = (session_t*)apr_palloc(pool, sizeof(session_t));
     sess->obj = (engine_object_t*)engine->obj;
+    sess->recog_request = NULL;
+    sess->stop_response = NULL;
+    sess->detector = mpf_activity_detector_create(pool);
     sess->iat_session_id = NULL;
     sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
     sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
@@ -400,6 +403,17 @@ apt_bool_t on_recog_start(session_t* sess,
         return FALSE;
     }
 
+    // 修改状态
+    response->start_line.request_state = MRCP_REQUEST_STATE_INPROGRESS;
+    // send asynchronous response
+    if (!mrcp_engine_channel_message_send(channel, response)) {
+        LOG_ERROR(
+            "[on_recog_start] [%s] mrcp_engine_channel_message_send failed.",
+            channel->id.buf);
+        return FALSE;
+    }
+    //
+    sess->recog_request = request;
     return TRUE;
 }
 
@@ -409,6 +423,15 @@ apt_bool_t on_recog_start_input_timers(session_t* sess,
     mrcp_engine_channel_t* channel = sess->channel;
     LOG_DEBUG("[on_recog_start_input_timers] [%s]", channel->id.buf);
     sess->timers_started = TRUE;
+    // send asynchronous response
+    if (!mrcp_engine_channel_message_send(channel, response)) {
+        LOG_ERROR(
+            "[on_recog_start_input_timers] [%s] "
+            "mrcp_engine_channel_message_send failed.",
+            channel->id.buf);
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -595,7 +618,115 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             channel->id.buf, iat_session_id, errcode);
     }
 
+    // “发射” 结果通知
+    emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+
     LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
 
     return NULL;
+}
+
+void emit_recog_result(session_t* sess, mrcp_recog_completion_cause_e cause) {
+    mrcp_engine_channel_t* channel = sess->channel;
+
+    LOG_DEBUG("[emit_recog_result] [%s] cause=%d", channel->id.buf, cause);
+
+    /* create RECOGNITION-COMPLETE event */
+    mrcp_message_t* message =
+        mrcp_event_create(sess->recog_request, RECOGNIZER_RECOGNITION_COMPLETE,
+                          sess->recog_request->pool);
+    if (!message) {
+        LOG_ERROR("[emit_recog_result] [%s] mrcp_event_create failed",
+                  channel->id.buf);
+        return;
+    }
+
+    /* get/allocate recognizer header */
+    mrcp_recog_header_t* recog_header =
+        (mrcp_recog_header_t*)mrcp_resource_header_prepare(message);
+    if (recog_header) {
+        /* set completion cause */
+        recog_header->completion_cause = cause;
+        mrcp_resource_header_property_add(message,
+                                          RECOGNIZER_HEADER_COMPLETION_CAUSE);
+    }
+    /* set request state */
+    message->start_line.request_state = MRCP_REQUEST_STATE_COMPLETE;
+    switch (cause) {
+        case RECOGNIZER_COMPLETION_CAUSE_SUCCESS: {
+            generate_nlsml_result(sess, message);
+            LOG_DEBUG(
+                "[emit_recog_result] [%s] RECOGNIZER_COMPLETION_CAUSE_SUCCESS: "
+                "%s",
+                channel->id.buf, message->body.buf);
+        } break;
+        default:
+            break;
+    }
+
+    sess->recog_request = NULL;
+
+    /* send asynch event */
+    mrcp_engine_channel_message_send(channel, message);
+}
+
+bool generate_nlsml_result(session_t* sess, mrcp_message_t* message) {
+    mrcp_engine_channel_t* channel = sess->channel;
+    apr_pool_t* pool = message->pool;
+
+    // get/allocate recognizer header
+    mrcp_generic_header_t* generic_header =
+        mrcp_generic_header_prepare(message);  // get/allocate generic header
+    if (!generic_header) {
+        LOG_ERROR(
+            "[generate_nlsml_result] [%s]: mrcp_generic_header_prepare failed",
+            channel->id.buf);
+        return false;
+    }
+
+    /*
+     * Create the document.
+     */
+    xmlDocPtr doc = NULL;
+    doc = xmlNewDoc(BAD_CAST "1.0");  //<?xml version="1.0"?>
+    xmlNodePtr node_result = xmlNewNode(NULL, BAD_CAST "result");
+    xmlDocSetRootElement(doc, node_result);
+
+    // <interpretation
+    //  grammar="session:%s@form-level.store"
+    //  confidence="100"
+    // >
+    xmlNodePtr node_interpretation =
+        xmlNewChild(node_result, NULL, BAD_CAST "interpretation", NULL);
+    xmlNewProp(node_interpretation, BAD_CAST "grammar",
+               BAD_CAST apr_psprintf(pool, "session:%s@form-level.store",
+                                     channel->id.buf));
+    xmlNewProp(node_interpretation, BAD_CAST "confidence", BAD_CAST "100");
+    // <instance>xxx</instance>
+    xmlNodePtr node_instance =
+        xmlNewChild(node_interpretation, NULL, BAD_CAST "instance", NULL);
+    xmlNodeAddContent(node_instance, BAD_CAST sess->iat_result);
+    // <input mode="speech">xxx</input>
+    xmlNodePtr node_input =
+        xmlNewChild(node_interpretation, NULL, BAD_CAST "input", NULL);
+    xmlNewProp(node_input, BAD_CAST "mode", BAD_CAST "speech");
+    xmlNodeAddContent(node_input, BAD_CAST sess->iat_result);
+
+    // 转字符串
+    xmlChar* xmlbuff = NULL;
+    int xmlbuffsz = 0;
+    xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &xmlbuffsz, "UTF-8", 1);
+    xmlFreeDoc(doc);
+
+    // 放到MRCP消息中
+    // set content types
+    apt_string_assign(&generic_header->content_type, "application/x-nlsml",
+                      pool);
+    mrcp_generic_header_property_add(message, GENERIC_HEADER_CONTENT_TYPE);
+    // 设置包体 Content NLSML 文本
+    apt_string_assign_n(&message->body, (const char*)xmlbuff, xmlbuffsz, pool);
+
+    free(xmlbuff);
+
+    return true;
 }
