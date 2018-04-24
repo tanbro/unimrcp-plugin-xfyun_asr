@@ -34,6 +34,8 @@
 #include "apr.h"
 #include "apr_file_info.h"
 #include "apr_queue.h"
+#include "apr_thread_cond.h"
+#include "apr_thread_mutex.h"
 #include "apr_thread_pool.h"
 
 // 讯飞 MSC SDK
@@ -115,6 +117,10 @@ typedef struct _session_t {
     /** Voice activity detector */
     mpf_activity_detector_t* detector;
     ////
+    apr_thread_cond_t* started_cond;
+    apr_thread_mutex_t* started_mutex;
+    apr_thread_cond_t* stopped_cond;
+    apr_thread_mutex_t* stopped_mutex;
     /** xfyun 听写 session id */
     char* iat_session_id;
     /** wav 识别缓冲 */

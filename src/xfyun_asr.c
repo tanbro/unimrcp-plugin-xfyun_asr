@@ -119,6 +119,8 @@ apt_bool_t plugin_close(mrcp_engine_t* engine) {
 
 mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     LOG_INFO("[channel_create]");
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
 
     // 初始化 Session
     session_t* sess = (session_t*)apr_palloc(pool, sizeof(session_t));
@@ -126,16 +128,48 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     sess->recog_request = NULL;
     sess->stop_response = NULL;
     sess->detector = mpf_activity_detector_create(pool);
+
+    status = apr_thread_cond_create(&sess->started_cond, pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_create] apr_thread_cond_create failed. error [%d] %s",
+            status, errstr);
+        return NULL;
+    }
+    status = apr_thread_mutex_create(&sess->started_mutex,
+                                     APR_THREAD_MUTEX_DEFAULT, pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_create] apr_thread_mutex_create failed. error [%d] %s",
+            status, errstr);
+        return NULL;
+    }
+    status = apr_thread_cond_create(&sess->stopped_cond, pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_create] apr_thread_cond_create failed. error [%d] %s",
+            status, errstr);
+        return NULL;
+    }
+    status = apr_thread_mutex_create(&sess->stopped_mutex,
+                                     APR_THREAD_MUTEX_DEFAULT, pool);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_create] apr_thread_mutex_create failed. error [%d] %s",
+            status, errstr);
+        return NULL;
+    }
+
     sess->iat_session_id = NULL;
     sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
     sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
     // TODO: 最大缓冲数量到底要设置为多少？
     status = apr_queue_create(&sess->wav_queue, 8192, pool);
-
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
         LOG_ERROR("[channel_create] apr_queue_create failed. error [%d] %s",
@@ -174,7 +208,39 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
 apt_bool_t channel_destroy(mrcp_engine_channel_t* channel) {
     LOG_INFO("[channel_destroy] [%s]", channel->id.buf);
 
-    // TODO: 通道结束，处理最终识别结果
+    session_t* sess = (session_t*)channel->method_obj;
+
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
+    status = apr_thread_cond_destroy(sess->started_cond);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_destroy] apr_thread_cond_destroy failed. error [%d] %s",
+            status, errstr);
+    }
+    status = apr_thread_mutex_destroy(sess->started_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_destroy] apr_thread_mutex_destroy failed. error [%d] %s",
+            status, errstr);
+    }
+    status = apr_thread_cond_destroy(sess->stopped_cond);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_destroy] apr_thread_cond_destroy failed. error [%d] %s",
+            status, errstr);
+    }
+    status = apr_thread_mutex_destroy(sess->stopped_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[channel_destroy] apr_thread_mutex_destroy failed. error [%d] %s",
+            status, errstr);
+    }
 
     return TRUE;
 }
@@ -343,10 +409,91 @@ apt_bool_t task_msg_process(apt_task_t* task, apt_task_msg_t* msg) {
 }
 
 apt_bool_t on_channel_open(session_t* sess) {
+    mrcp_engine_channel_t* channel = sess->channel;
+
+    LOG_DEBUG("[on_channel_open] [%s]", channel->id.buf);
+
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
+    // 等待识别的会话处理线程启动
+
+    status = apr_thread_mutex_lock(sess->started_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[on_channel_open] [%s] apr_thread_mutex_lock failed. error [%d] "
+            "%s",
+            channel->id.buf, status, errstr);
+        return FALSE;
+    }
+    LOG_DEBUG(
+        "[on_channel_open] [%s] wait channel recog-session thread starting "
+        "... ",
+        channel->id.buf);
+    status = apr_thread_cond_wait(sess->started_cond, sess->started_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[on_channel_open] [%s] apr_thread_cond_wait failed. error [%d] %s",
+            channel->id.buf, status, errstr);
+        return FALSE;
+    }
+    LOG_DEBUG(
+        "[on_channel_open] [%s] wait channel recog-session thread starting "
+        "Ok. ",
+        channel->id.buf);
+
     return TRUE;
 }
 
-void on_channel_close(session_t* sess) {}
+void on_channel_close(session_t* sess) {
+    mrcp_engine_channel_t* channel = sess->channel;
+
+    LOG_DEBUG("[on_channel_close] [%s]", channel->id.buf);
+
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
+    // 通知停止
+    status = apr_queue_term(sess->wav_queue);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_CRITICAL(
+            "[on_channel_close] [%s] apr_queue_term failed. error [%d] %s",
+            channel->id.buf, status, errstr);
+        return;
+    }
+
+    // 等待识别的会话处理线程启动
+
+    status = apr_thread_mutex_lock(sess->stopped_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[on_channel_close] [%s] apr_thread_mutex_lock failed. error [%d] "
+            "%s",
+            channel->id.buf, status, errstr);
+        return;
+    }
+    LOG_DEBUG(
+        "[on_channel_close] [%s] wait channel recog-session thread stopping "
+        "... ",
+        channel->id.buf);
+    status = apr_thread_cond_wait(sess->stopped_cond, sess->stopped_mutex);
+    if (APR_SUCCESS != status) {
+        apr_strerror(status, errstr, ERRSTR_SZ);
+        LOG_ERROR(
+            "[on_channel_close] [%s] apr_thread_cond_wait failed. error [%d] "
+            "%s",
+            channel->id.buf, status, errstr);
+        return;
+    }
+    LOG_DEBUG(
+        "[on_channel_close] [%s] wait channel recog-session thread stopping "
+        "Ok. ",
+        channel->id.buf);
+}
 
 void on_channel_request(session_t* sess, mrcp_message_t* request) {
     mrcp_engine_channel_t* channel = sess->channel;
@@ -389,8 +536,7 @@ apt_bool_t on_recog_start(session_t* sess,
     const char* session_begin_params =
         "sub = iat, domain = iat, aue = raw, asr_denoise = 1, language = "
         "zh_cn, accent = mandarin, "
-        "sample_rate = 8000, result_type = plain, result_encoding = utf8, "
-        "vad_bos = 1000";
+        "sample_rate = 8000, result_type = plain, result_encoding = utf8";
     strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
 
     // 启动会话处理线程
@@ -455,8 +601,9 @@ apt_bool_t on_recog_stop(session_t* sess,
     status = apr_queue_term(sess->wav_queue);
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR("[on_recog_stop] [%s] apr_queue_term failed. error [%d] %s",
-                  channel->id.buf, status, errstr);
+        LOG_CRITICAL(
+            "[on_recog_stop] [%s] apr_queue_term failed. error [%d] %s",
+            channel->id.buf, status, errstr);
         return FALSE;
     }
     return TRUE;
@@ -467,125 +614,93 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     session_t* sess = (session_t*)arg;
     mrcp_engine_channel_t* channel = sess->channel;
 
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
+
     LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
 
-    // 开始【讯飞云】听写会话
-    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin", channel->id.buf);
-    const char* iat_session_id =
-        QISRSessionBegin(NULL, sess->iat_begin_params,
-                         &errcode);  //听写不需要语法，第一个参数为NULL
+    // 广播：启动成功
+    status = apr_thread_cond_broadcast(sess->started_cond);
     if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[recog_thread_func] [%s] QISRSessionBegin failed! error code: "
-            "%d",
-            channel->id.buf, errcode);
-        return FALSE;
+        LOG_CRITICAL(
+            "[recog_thread_func] [%s] apr_thread_cond_broadcast failed for "
+            "started condition. "
+            "error [%d] %s",
+            channel->id.buf, status, errstr);
+        return NULL;
     }
-    if (!iat_session_id) {
-        LOG_ERROR("[recog_thread_func] [%s] QISRSessionBegin failed!",
-                  channel->id.buf);
-        return FALSE;
-    }
-    sess->iat_session_id =
-        (char*)apr_pcalloc(channel->pool, IAT_SESSION_ID_LEN);
-    strncpy(sess->iat_session_id, iat_session_id, IAT_SESSION_ID_LEN);
-    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
-              channel->id.buf, sess->iat_session_id);
 
-    ///
-
-    // 调用【讯飞云】听写 API
-    unsigned int total_len = 0;
-    int ep_stat = MSP_EP_LOOKING_FOR_SPEECH;  //端点检测
-    int rec_stat = MSP_REC_STATUS_SUCCESS;    //识别状态
-
-    bool is_terminated = false;
-
-    // 上传！
-    while (true) {
-        // POP 流媒体数据
-        // 如果 queue 已经空，将 BLOCK!!!
-        wav_que_obj_t* wav_obj = NULL;
-        apr_status_t status = APR_SUCCESS;
-        char errstr[ERRSTR_SZ] = {0};
-        status = apr_queue_pop(sess->wav_queue, (void**)&wav_obj);
-        if (APR_EOF == status) {
-            // 被打断
-            is_terminated = true;
-            LOG_DEBUG("[recog_thread_func] [%s] terminated", channel->id.buf);
-            break;
-        }
-        if (APR_SUCCESS != status) {
-            apr_strerror(status, errstr, ERRSTR_SZ);
+    do {
+        // 开始【讯飞云】听写会话
+        LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin", channel->id.buf);
+        const char* iat_session_id =
+            QISRSessionBegin(NULL, sess->iat_begin_params,
+                             &errcode);  //听写不需要语法，第一个参数为NULL
+        if (MSP_SUCCESS != errcode) {
             LOG_ERROR(
-                "[recog_thread_func] [%s] apr_queue_pop failed. error [%d] "
-                "%s",
-                channel->id.buf, status, errstr);
+                "[recog_thread_func] [%s] QISRSessionBegin failed! error code: "
+                "%d",
+                channel->id.buf, errcode);
             break;
         }
-
-        if (wav_obj) {
-            // 上传到讯飞云，进行识别
-            errcode =
-                QISRAudioWrite(iat_session_id, wav_obj->data, wav_obj->len,
-                               MSP_AUDIO_SAMPLE_CONTINUE, &ep_stat, &rec_stat);
-            if (MSP_SUCCESS != errcode) {
-                LOG_ERROR(
-                    "[recog_thread_func] [%s] (%s) QISRAudioWrite failed! "
-                    "error code: %d",
-                    channel->id.buf, iat_session_id, errcode);
-                break;
-            }
-        }
-
-        // 如果已经有部分听写结果
-        if (MSP_REC_STATUS_SUCCESS == rec_stat) {
-            const char* rslt =
-                QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
-            if (MSP_SUCCESS != errcode) {
-                LOG_ERROR(
-                    "[recog_thread_func] [%s] (%s) QISRGetResult failed!"
-                    " error code: %d",
-                    channel->id.buf, iat_session_id, errcode);
-                break;
-            }
-            if (NULL != rslt) {
-                // 识别出来了部分结果。记录下来！
-                LOG_DEBUG(
-                    "[recog_thread_func] [%s] (%s) MSP_REC_STATUS_SUCCESS: %s",
-                    channel->id.buf, iat_session_id, rslt);
-                strncat(sess->iat_result, rslt,
-                        IAT_RESULT_STR_LEN - strlen(sess->iat_result));
-            }
-        }
-
-        if (MSP_EP_AFTER_SPEECH == ep_stat) {
-            // 说完了。退出读缓冲的循环
-            LOG_DEBUG("[recog_thread_func] [%s] (%s) MSP_EP_AFTER_SPEECH",
-                      channel->id.buf, iat_session_id);
+        if (!iat_session_id) {
+            LOG_ERROR("[recog_thread_func] [%s] QISRSessionBegin failed!",
+                      channel->id.buf);
             break;
         }
-    }
+        sess->iat_session_id =
+            (char*)apr_pcalloc(channel->pool, IAT_SESSION_ID_LEN);
+        strncpy(sess->iat_session_id, iat_session_id, IAT_SESSION_ID_LEN);
+        LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
+                  channel->id.buf, sess->iat_session_id);
 
-    // 上传一个空音频块，表示音频流结束
-    LOG_DEBUG(
-        "[recog_thread_func] [%s] (%s) QISRAudioWrite MSP_AUDIO_SAMPLE_LAST",
-        channel->id.buf, iat_session_id);
-    errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
-                             &ep_stat, &rec_stat);
-    if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[recog_thread_func] [%s] (%s) QISRAudioWrite failed for  "
-            "MSP_AUDIO_SAMPLE_LAST! error code: %d",
-            channel->id.buf, iat_session_id, errcode);
-    }
+        ///
 
-    if (!is_terminated) {
-        // 如果不是被打断
-        if (MSP_EP_AFTER_SPEECH == ep_stat) {
-            // 说完了，但是还要继续接收结果
-            // 继续接收结果，直到完成
-            while (MSP_REC_STATUS_COMPLETE != rec_stat) {
+        // 调用【讯飞云】听写 API
+        unsigned int total_len = 0;
+        int ep_stat = MSP_EP_LOOKING_FOR_SPEECH;  //端点检测
+        int rec_stat = MSP_REC_STATUS_SUCCESS;    //识别状态
+
+        bool is_terminated = false;
+
+        // 上传！
+        while (true) {
+            // POP 流媒体数据
+            // 如果 queue 已经空，将 BLOCK!!!
+            wav_que_obj_t* wav_obj = NULL;
+            status = apr_queue_pop(sess->wav_queue, (void**)&wav_obj);
+            if (APR_EOF == status) {
+                // 被打断
+                is_terminated = true;
+                LOG_DEBUG("[recog_thread_func] [%s] terminated",
+                          channel->id.buf);
+                break;
+            }
+            if (APR_SUCCESS != status) {
+                apr_strerror(status, errstr, ERRSTR_SZ);
+                LOG_ERROR(
+                    "[recog_thread_func] [%s] apr_queue_pop failed. error [%d] "
+                    "%s",
+                    channel->id.buf, status, errstr);
+                break;
+            }
+
+            if (wav_obj) {
+                // 上传到讯飞云，进行识别
+                errcode = QISRAudioWrite(
+                    iat_session_id, wav_obj->data, wav_obj->len,
+                    MSP_AUDIO_SAMPLE_CONTINUE, &ep_stat, &rec_stat);
+                if (MSP_SUCCESS != errcode) {
+                    LOG_ERROR(
+                        "[recog_thread_func] [%s] (%s) QISRAudioWrite failed! "
+                        "error code: %d",
+                        channel->id.buf, iat_session_id, errcode);
+                    break;
+                }
+            }
+
+            // 如果已经有部分听写结果
+            if (MSP_REC_STATUS_SUCCESS == rec_stat) {
                 const char* rslt =
                     QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
                 if (MSP_SUCCESS != errcode) {
@@ -596,33 +711,94 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                     break;
                 }
                 if (NULL != rslt) {
-                    // 识别出来了最后一个部分结果。记录下来！
+                    // 识别出来了部分结果。记录下来！
                     LOG_DEBUG(
-                        "[recog_thread_func] [%s] (%s) "
-                        "MSP_REC_STATUS_COMPLETE: %s",
+                        "[recog_thread_func] [%s] (%s) MSP_REC_STATUS_SUCCESS: "
+                        "%s",
                         channel->id.buf, iat_session_id, rslt);
                     strncat(sess->iat_result, rslt,
                             IAT_RESULT_STR_LEN - strlen(sess->iat_result));
                 }
-                usleep(150 * 1000);  //防止频繁占用CPU
+            }
+
+            if (MSP_EP_AFTER_SPEECH == ep_stat) {
+                // 说完了。退出读缓冲的循环
+                LOG_DEBUG("[recog_thread_func] [%s] (%s) MSP_EP_AFTER_SPEECH",
+                          channel->id.buf, iat_session_id);
+                break;
             }
         }
-    }
 
-    // 结束【讯飞云】听写会话，无论是否是被打断
-    LOG_DEBUG("[recog_thread_func] [%s] (%s) QISRSessionEnd", channel->id.buf,
-              iat_session_id);
-    errcode = QISRSessionEnd(iat_session_id, NULL);
+        // 上传一个空音频块，表示音频流结束
+        LOG_DEBUG(
+            "[recog_thread_func] [%s] (%s) QISRAudioWrite "
+            "MSP_AUDIO_SAMPLE_LAST",
+            channel->id.buf, iat_session_id);
+        errcode = QISRAudioWrite(iat_session_id, NULL, 0, MSP_AUDIO_SAMPLE_LAST,
+                                 &ep_stat, &rec_stat);
+        if (MSP_SUCCESS != errcode) {
+            LOG_ERROR(
+                "[recog_thread_func] [%s] (%s) QISRAudioWrite failed for  "
+                "MSP_AUDIO_SAMPLE_LAST! error code: %d",
+                channel->id.buf, iat_session_id, errcode);
+        }
+
+        if (!is_terminated) {
+            // 如果不是被打断
+            if (MSP_EP_AFTER_SPEECH == ep_stat) {
+                // 说完了，但是还要继续接收结果
+                // 继续接收结果，直到完成
+                while (MSP_REC_STATUS_COMPLETE != rec_stat) {
+                    const char* rslt =
+                        QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
+                    if (MSP_SUCCESS != errcode) {
+                        LOG_ERROR(
+                            "[recog_thread_func] [%s] (%s) QISRGetResult "
+                            "failed!"
+                            " error code: %d",
+                            channel->id.buf, iat_session_id, errcode);
+                        break;
+                    }
+                    if (NULL != rslt) {
+                        // 识别出来了最后一个部分结果。记录下来！
+                        LOG_DEBUG(
+                            "[recog_thread_func] [%s] (%s) "
+                            "MSP_REC_STATUS_COMPLETE: %s",
+                            channel->id.buf, iat_session_id, rslt);
+                        strncat(sess->iat_result, rslt,
+                                IAT_RESULT_STR_LEN - strlen(sess->iat_result));
+                    }
+                    usleep(150 * 1000);  //防止频繁占用CPU
+                }
+            }
+        }
+
+        // 结束【讯飞云】听写会话，无论是否是被打断
+        LOG_DEBUG("[recog_thread_func] [%s] (%s) QISRSessionEnd",
+                  channel->id.buf, iat_session_id);
+        errcode = QISRSessionEnd(iat_session_id, NULL);
+        if (MSP_SUCCESS != errcode) {
+            LOG_ERROR(
+                "[recog_thread_func] [%s] (%s) QISRSessionEnd failed! "
+                "error code: %d",
+                channel->id.buf, iat_session_id, errcode);
+        }
+
+        // “发射” 结果通知，如果不是被打断的
+        if (!is_terminated) {
+            emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+        }
+    } while (false);
+
+    // 广播：执行完毕
+    status = apr_thread_cond_broadcast(sess->stopped_cond);
     if (MSP_SUCCESS != errcode) {
-        LOG_ERROR(
-            "[recog_thread_func] [%s] (%s) QISRSessionEnd failed! "
-            "error code: %d",
-            channel->id.buf, iat_session_id, errcode);
-    }
-
-    // “发射” 结果通知，如果不是被打断的
-    if (!is_terminated) {
-        emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+        LOG_CRITICAL(
+            "[recog_thread_func] [%s] apr_thread_cond_broadcast failed for "
+            "stopped condition. "
+            "error [%d] %s",
+            channel->id.buf, status, errstr);
+        return NULL;
     }
 
     LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
