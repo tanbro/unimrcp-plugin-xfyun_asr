@@ -1,4 +1,5 @@
 #include "xfyun_asr.h"
+#include "default_conf.h"
 
 mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     LOG_NOTICE("[plugin_create] Version: %s. Compiler: %s. Build-Time: %s %s",
@@ -51,12 +52,21 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
         pool                       // pool to allocate memory from
     );
 
+    LOG_DEBUG("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    LOG_DEBUG("dir_layout=%p", engine->dir_layout);
+    LOG_DEBUG("apt_dir_layout_path_get APT_LAYOUT_CONF_DIR ...");
+    const char* dir = apt_dir_layout_path_get(engine->dir_layout, APT_LAYOUT_CONF_DIR);
+    LOG_DEBUG("apt_dir_layout_path_get APT_LAYOUT_CONF_DIR = %s", dir);
+
     // 返回 engine
     return engine;
 }
 
 apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
     LOG_NOTICE("[plugin_destroy]");
+
+    apr_status_t status = APR_SUCCESS;
+    char errstr[ERRSTR_SZ] = {0};
 
     engine_object_t* obj = (engine_object_t*)engine->obj;
     if (obj->task) {
@@ -65,10 +75,6 @@ apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
         obj->task = NULL;
     }
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
-    // TODO: 线程池的大小设置
     apr_thread_pool_destroy(thread_pool);
     if (APR_SUCCESS != status) {
         apr_strerror(status, errstr, ERRSTR_SZ);

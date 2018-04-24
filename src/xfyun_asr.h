@@ -100,6 +100,8 @@ MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
 
 /** 插件的线程池 */
 static apr_thread_pool_t* thread_pool = NULL;
+static apr_table_t* thread_pool_conf = NULL;
+static apr_table_t* qis_session_login_params_conf = NULL;
 
 /** Declaration of recognizer engine object to associate */
 typedef struct _engine_object_t {
