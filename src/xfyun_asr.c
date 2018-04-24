@@ -387,8 +387,10 @@ apt_bool_t on_recog_start(session_t* sess,
 
     // 开始一个语音会话
     const char* session_begin_params =
-        "sub = iat, domain = iat, language = zh_cn, accent = mandarin, "
-        "sample_rate = 8000, result_type = plain, result_encoding = utf8";
+        "sub = iat, domain = iat, aue = raw, asr_denoise = 1, language = "
+        "zh_cn, accent = mandarin, "
+        "sample_rate = 8000, result_type = plain, result_encoding = utf8, "
+        "vad_bos = 1000";
     strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
 
     // 启动会话处理线程
@@ -468,7 +470,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
 
     // 开始【讯飞云】听写会话
-    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin()", channel->id.buf);
+    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin", channel->id.buf);
     const char* iat_session_id =
         QISRSessionBegin(NULL, sess->iat_begin_params,
                          &errcode);  //听写不需要语法，第一个参数为NULL
@@ -578,37 +580,37 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             channel->id.buf, iat_session_id, errcode);
     }
 
-    if (is_terminated) {
-        // TODO: 是被打断的，应该如何处理？
-        LOG_DEBUG("[recog_thread_func] [%s] (%s) 被打断，应该如何处理？",
-                  channel->id.buf, iat_session_id);
-    } else if (MSP_EP_AFTER_SPEECH == ep_stat) {
-        // 说完了，但是还要继续接收结果
-        // 继续接收结果，直到完成
-        while (MSP_REC_STATUS_COMPLETE != rec_stat) {
-            const char* rslt =
-                QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
-            if (MSP_SUCCESS != errcode) {
-                LOG_ERROR(
-                    "[recog_thread_func] [%s] (%s) QISRGetResult failed!"
-                    " error code: %d",
-                    channel->id.buf, iat_session_id, errcode);
-                break;
+    if (!is_terminated) {
+        // 如果不是被打断
+        if (MSP_EP_AFTER_SPEECH == ep_stat) {
+            // 说完了，但是还要继续接收结果
+            // 继续接收结果，直到完成
+            while (MSP_REC_STATUS_COMPLETE != rec_stat) {
+                const char* rslt =
+                    QISRGetResult(iat_session_id, &rec_stat, 0, &errcode);
+                if (MSP_SUCCESS != errcode) {
+                    LOG_ERROR(
+                        "[recog_thread_func] [%s] (%s) QISRGetResult failed!"
+                        " error code: %d",
+                        channel->id.buf, iat_session_id, errcode);
+                    break;
+                }
+                if (NULL != rslt) {
+                    // 识别出来了最后一个部分结果。记录下来！
+                    LOG_DEBUG(
+                        "[recog_thread_func] [%s] (%s) "
+                        "MSP_REC_STATUS_COMPLETE: %s",
+                        channel->id.buf, iat_session_id, rslt);
+                    strncat(sess->iat_result, rslt,
+                            IAT_RESULT_STR_LEN - strlen(sess->iat_result));
+                }
+                usleep(150 * 1000);  //防止频繁占用CPU
             }
-            if (NULL != rslt) {
-                // 识别出来了最后一个部分结果。记录下来！
-                LOG_DEBUG(
-                    "[recog_thread_func] [%s] (%s) MSP_REC_STATUS_COMPLETE: %s",
-                    channel->id.buf, iat_session_id, rslt);
-                strncat(sess->iat_result, rslt,
-                        IAT_RESULT_STR_LEN - strlen(sess->iat_result));
-            }
-            usleep(150 * 1000);  //防止频繁占用CPU
         }
     }
 
-    // 结束【讯飞云】听写会话
-    LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin(%s)", channel->id.buf,
+    // 结束【讯飞云】听写会话，无论是否是被打断
+    LOG_DEBUG("[recog_thread_func] [%s] (%s) QISRSessionEnd", channel->id.buf,
               iat_session_id);
     errcode = QISRSessionEnd(iat_session_id, NULL);
     if (MSP_SUCCESS != errcode) {
@@ -618,8 +620,10 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             channel->id.buf, iat_session_id, errcode);
     }
 
-    // “发射” 结果通知
-    emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+    // “发射” 结果通知，如果不是被打断的
+    if (!is_terminated) {
+        emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+    }
 
     LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
 
