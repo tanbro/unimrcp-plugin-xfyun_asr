@@ -1,0 +1,21 @@
+{
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Chromium, IndentWidth: 4 }",
+    "cmake.environment": {
+        "UNIMRCP_SRC_DIR": "${workspaceRoot}/../deps/unimrcp-1.5.0",
+        "XFYUN_MSC_SDK_DIR": "${workspaceRoot}/../deps/xfy_linux_iat"
+    },
+    "files.associations": {
+        "Pipfile": "toml",
+        "qisr.h": "c",
+        "system_error": "cpp",
+        "initializer_list": "c",
+        "*.tcc": "cpp",
+        "climits": "cpp",
+        "xfyun_default_conf.h": "c",
+        "xfyun_asr.h": "c",
+        "parser.h": "c",
+        "hash.h": "c",
+        "cstdlib": "c",
+        "typeinfo": "c"
+    }
+}
