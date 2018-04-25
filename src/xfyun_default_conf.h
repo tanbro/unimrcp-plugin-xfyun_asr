@@ -1,3 +1,21 @@
+#ifndef _XFYUN_DEFAULT_CONF_H_
+#define _XFYUN_DEFAULT_CONF_H_
+
+const char* DEFAULT_CONF_MSPLOGIN_PARAMS[][2] = {
+    /**
+     * SDK申请成功后获取到的appid
+     *
+     * 申请SDK请前往http://www.xfyun.cn/，此参数必须传入
+     */
+    {"appid", ""}  //
+};
+
+const char* DEFAULT_CONF_WAV_QUEUE[][2] = {
+    /**
+     * 每个会话中，可存放的音频流包的个数，不是字节大小
+     */
+    {"capacity", "8192"}  //
+};
 
 const char* DEFAULT_CONF_PLUGIN_THREADPOOL[][2] = {
     /**
@@ -12,7 +30,6 @@ const char* DEFAULT_CONF_PLUGIN_THREADPOOL[][2] = {
      * 默认： cpu_count * 5
      */
     {"max_threads", ""}  //
-
 };
 
 const char* DEFAULT_CONF_QISRSession_PARAMS[][2] = {
@@ -84,3 +101,5 @@ const char* DEFAULT_CONF_QISRSession_PARAMS[][2] = {
      */
     {"vad_eos", "2000"}  //
 };
+
+#endif

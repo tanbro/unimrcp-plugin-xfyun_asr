@@ -1,23 +1,15 @@
 #include "xfyun_asr.h"
-#include "default_conf.h"
+#include "xfyun_default_conf.h"
 
 mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     LOG_NOTICE("[plugin_create] Version: %s. Compiler: %s. Build-Time: %s %s",
                MAKE_STR(VERSION_STRING), MAKE_STR(COMPILER_STRING), __TIME__,
                __DATE__);
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
-    // TODO: 线程池的大小设置
-    apr_thread_pool_create(&thread_pool, get_nprocs(), get_nprocs() * 5, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[mrcp_plugin_create] apr_thread_pool_create failed. error [%d] %s",
-            status, errstr);
-        return NULL;
-    }
+    // conf 相关全局变量
+    LOG_DEBUG("[plugin_create] create configure mutex");
+    LOG_APR_CRITICAL(
+        apr_thread_mutex_create(&conf_mutex, APR_THREAD_MUTEX_DEFAULT, pool));
 
     engine_object_t* engine_object =
         (engine_object_t*)apr_palloc(pool, sizeof(engine_object_t));
@@ -30,7 +22,7 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     engine_object->task =
         apt_consumer_task_create(engine_object, msg_pool, pool);
     if (!engine_object->task) {
-        LOG_ERROR("[plugin_create] create task message pool failed");
+        LOG_CRITICAL("[plugin_create] apt_consumer_task_create failed");
         return NULL;
     }
     task = apt_consumer_task_base_get(engine_object->task);
@@ -39,7 +31,7 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     if (vtable) {
         vtable->process_msg = task_msg_process;
     } else {
-        LOG_ERROR("[plugin_create] cannot find task vtable");
+        LOG_CRITICAL("[plugin_create] apt_task_vtable_get failed.");
         return NULL;
     }
 
@@ -51,12 +43,10 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
         &engine_vtable,            // virtual methods table of engine
         pool                       // pool to allocate memory from
     );
-
-    LOG_DEBUG("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-    LOG_DEBUG("dir_layout=%p", engine->dir_layout);
-    LOG_DEBUG("apt_dir_layout_path_get APT_LAYOUT_CONF_DIR ...");
-    const char* dir = apt_dir_layout_path_get(engine->dir_layout, APT_LAYOUT_CONF_DIR);
-    LOG_DEBUG("apt_dir_layout_path_get APT_LAYOUT_CONF_DIR = %s", dir);
+    if (engine == NULL) {
+        LOG_CRITICAL("[plugin_create] mrcp_engine_create failed");
+        return NULL;
+    }
 
     // 返回 engine
     return engine;
@@ -65,9 +55,6 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
 apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
     LOG_NOTICE("[plugin_destroy]");
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
     engine_object_t* obj = (engine_object_t*)engine->obj;
     if (obj->task) {
         apt_task_t* task = apt_consumer_task_base_get(obj->task);
@@ -75,11 +62,9 @@ apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
         obj->task = NULL;
     }
 
-    apr_thread_pool_destroy(thread_pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR("[apt_bool_t] apr_thread_pool_destroy failed. error [%d] %s",
-                  status, errstr);
+    if (thread_pool) {
+        LOG_DEBUG("[plugin_destroy] apr_thread_pool_destroy");
+        LOG_APR_ERROR(apr_thread_pool_destroy(thread_pool));
     }
 
     return TRUE;
@@ -125,8 +110,6 @@ apt_bool_t plugin_close(mrcp_engine_t* engine) {
 
 mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     LOG_INFO("[channel_create]");
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
 
     // 初始化 Session
     session_t* sess = (session_t*)apr_palloc(pool, sizeof(session_t));
@@ -135,40 +118,12 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     sess->stop_response = NULL;
     sess->detector = mpf_activity_detector_create(pool);
 
-    status = apr_thread_cond_create(&sess->started_cond, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_create] apr_thread_cond_create failed. error [%d] %s",
-            status, errstr);
-        return NULL;
-    }
-    status = apr_thread_mutex_create(&sess->started_mutex,
-                                     APR_THREAD_MUTEX_DEFAULT, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_create] apr_thread_mutex_create failed. error [%d] %s",
-            status, errstr);
-        return NULL;
-    }
-    status = apr_thread_cond_create(&sess->stopped_cond, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_create] apr_thread_cond_create failed. error [%d] %s",
-            status, errstr);
-        return NULL;
-    }
-    status = apr_thread_mutex_create(&sess->stopped_mutex,
-                                     APR_THREAD_MUTEX_DEFAULT, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_create] apr_thread_mutex_create failed. error [%d] %s",
-            status, errstr);
-        return NULL;
-    }
+    LOG_APR_CRITICAL(apr_thread_cond_create(&sess->started_cond, pool));
+    LOG_APR_CRITICAL(apr_thread_mutex_create(&sess->started_mutex,
+                                             APR_THREAD_MUTEX_DEFAULT, pool));
+    LOG_APR_CRITICAL(apr_thread_cond_create(&sess->stopped_cond, pool));
+    LOG_APR_CRITICAL(apr_thread_mutex_create(&sess->stopped_mutex,
+                                             APR_THREAD_MUTEX_DEFAULT, pool));
 
     sess->iat_session_id = NULL;
     sess->iat_complted = false;
@@ -176,13 +131,7 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
 
     // TODO: 最大缓冲数量到底要设置为多少？
-    status = apr_queue_create(&sess->wav_queue, 8192, pool);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR("[channel_create] apr_queue_create failed. error [%d] %s",
-                  status, errstr);
-        return NULL;
-    }
+    LOG_APR_CRITICAL(apr_queue_create(&sess->wav_queue, 8192, pool));
 
     /// stream 设置
     mpf_stream_capabilities_t* capabilities;
@@ -217,41 +166,10 @@ apt_bool_t channel_destroy(mrcp_engine_channel_t* channel) {
 
     session_t* sess = (session_t*)channel->method_obj;
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
-    status = apr_thread_cond_destroy(sess->started_cond);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_destroy] apr_thread_cond_destroy failed for "
-            "started_cond. error [%d] %s",
-            status, errstr);
-    }
-    status = apr_thread_mutex_destroy(sess->started_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_destroy] apr_thread_mutex_destroy failed for "
-            "started_mutex. error [%d] %s",
-            status, errstr);
-    }
-    status = apr_thread_cond_destroy(sess->stopped_cond);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_destroy] apr_thread_cond_destroy failed for "
-            "stopped_cond. error [%d] %s",
-            status, errstr);
-    }
-    status = apr_thread_mutex_destroy(sess->stopped_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[channel_destroy] apr_thread_mutex_destroy failed for "
-            "stopped_mutex. error [%d] %s",
-            status, errstr);
-    }
+    LOG_APR_CRITICAL(apr_thread_cond_destroy(sess->started_cond));
+    LOG_APR_CRITICAL(apr_thread_mutex_destroy(sess->started_mutex));
+    LOG_APR_CRITICAL(apr_thread_cond_destroy(sess->stopped_cond));
+    LOG_APR_CRITICAL(apr_thread_mutex_destroy(sess->stopped_mutex));
 
     return TRUE;
 }
@@ -422,7 +340,39 @@ apt_bool_t task_msg_process(apt_task_t* task, apt_task_msg_t* msg) {
 apt_bool_t on_channel_open(session_t* sess) {
     mrcp_engine_channel_t* channel = sess->channel;
     LOG_DEBUG("[on_channel_open] [%s]", channel->id.buf);
-    return TRUE;
+
+    bool result = false;
+
+    LOG_DEBUG("[on_channel_open] [%s] configure >>>", channel->id.buf);
+    LOG_APR_CRITICAL(apr_thread_mutex_lock(conf_mutex));
+    do {
+        if (conf_loaded) {
+            result = true;
+        } else {
+            // 还没有加在配置，需要一次加载+部分初始化
+            LOG_DEBUG("[on_channel_open] [%s] configurate ...",
+                      channel->id.buf);
+
+            // TODO: 线程池的大小设置
+            if (!thread_pool) {
+                LOG_INFO("[on_channel_open] [%s] apr_thread_pool_create",
+                         channel->id.buf);
+                LOG_APR_CRITICAL(apr_thread_pool_create(
+                    &thread_pool, get_nprocs(), get_nprocs() * 5,
+                    channel->engine->pool));
+            }
+
+            // 标记：加载完成
+            LOG_DEBUG("[on_channel_open] [%s] configurate completed.",
+                      channel->id.buf);
+            conf_loaded = true;
+            result = true;
+        }
+    } while (false);
+    LOG_APR_CRITICAL(apr_thread_mutex_unlock(conf_mutex));
+    LOG_DEBUG("[on_channel_open] [%s] configure <<<", channel->id.buf);
+
+    return result;
 }
 
 void on_channel_close(session_t* sess) {
@@ -477,49 +427,16 @@ apt_bool_t on_recog_start(session_t* sess,
     strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
 
     // 启动会话处理线程
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-    apr_thread_pool_push(thread_pool, recog_thread_func, (void*)sess, 0, NULL);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_pool_push failed. error [%d] %s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
-
-    // 等待会话处理线程启动
     LOG_DEBUG("[on_recog_start] [%s] recog_thread_func starting ...",
               channel->id.buf);
-    status = apr_thread_mutex_lock(sess->started_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_mutex_lock failed for "
-            "started_mutex. error [%d] "
-            "%s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
-    status = apr_thread_cond_wait(sess->started_cond, sess->started_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_cond_wait failed started_cond. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
-    status = apr_thread_mutex_unlock(sess->started_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_ERROR(
-            "[on_recog_start] [%s] apr_thread_mutex_unlock failed for "
-            "started_mutex. error [%d] "
-            "%s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
+    LOG_APR_CRITICAL(
+        apr_thread_pool_push(thread_pool, recog_thread_func, (void*)sess,
+                             APR_THREAD_TASK_PRIORITY_NORMAL, NULL));
+    // 等待会话处理线程启动
+    LOG_APR_CRITICAL(apr_thread_mutex_lock(sess->started_mutex));
+    LOG_APR_CRITICAL(
+        apr_thread_cond_wait(sess->started_cond, sess->started_mutex));
+    LOG_APR_CRITICAL(apr_thread_mutex_unlock(sess->started_mutex));
     LOG_DEBUG("[on_recog_start] [%s] recog_thread_func started. ",
               channel->id.buf);
 
@@ -578,22 +495,10 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     session_t* sess = (session_t*)arg;
     mrcp_engine_channel_t* channel = sess->channel;
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
     LOG_DEBUG("[recog_thread_func] [%s]  >>>", channel->id.buf);
 
     // 广播：启动成功
-    status = apr_thread_cond_broadcast(sess->started_cond);
-    if (MSP_SUCCESS != errcode) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[recog_thread_func] [%s] apr_thread_cond_broadcast failed for "
-            "started condition. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return NULL;
-    }
+    LOG_APR_CRITICAL(apr_thread_cond_broadcast(sess->started_cond));
 
     do {
         // 开始【讯飞云】听写会话
@@ -633,7 +538,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             // POP 流媒体数据
             // 如果 queue 已经空，将 BLOCK!!!
             wav_que_obj_t* wav_obj = NULL;
-            status = apr_queue_pop(sess->wav_queue, (void**)&wav_obj);
+            apr_status_t status =
+                apr_queue_pop(sess->wav_queue, (void**)&wav_obj);
             if (APR_EOF == status) {
                 // 被打断
                 is_terminated = true;
@@ -642,11 +548,7 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                 break;
             }
             if (APR_SUCCESS != status) {
-                apr_strerror(status, errstr, ERRSTR_SZ);
-                LOG_ERROR(
-                    "[recog_thread_func] [%s] apr_queue_pop failed. error [%d] "
-                    "%s",
-                    channel->id.buf, status, errstr);
+                LOG_APR_WARNING(status);
                 break;
             }
 
@@ -756,39 +658,11 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
     } while (false);
 
     // 设置结束标志
-    status = apr_thread_mutex_lock(sess->stopped_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[recog_thread_func] [%s] apr_thread_mutex_lock failed for "
-            "stopped mutex. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return NULL;
-    }
+    LOG_APR_CRITICAL(apr_thread_mutex_lock(sess->stopped_mutex));
     sess->iat_complted = true;
-    status = apr_thread_mutex_unlock(sess->stopped_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[recog_thread_func] [%s] apr_thread_mutex_unlock failed for "
-            "stopped mutex. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return NULL;
-    }
-
+    LOG_APR_CRITICAL(apr_thread_mutex_unlock(sess->stopped_mutex));
     // 广播：执行完毕
-    status = apr_thread_cond_broadcast(sess->stopped_cond);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[recog_thread_func] [%s] apr_thread_cond_broadcast failed for "
-            "stopped condition. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return NULL;
-    }
+    LOG_APR_CRITICAL(apr_thread_cond_broadcast(sess->stopped_cond));
 
     LOG_DEBUG("[recog_thread_func] [%s]  <<<", channel->id.buf);
 
@@ -800,82 +674,25 @@ apt_bool_t term_session(session_t* sess) {
 
     LOG_DEBUG("[term_session] [%s] >>>", channel->id.buf);
 
-    apr_status_t status = APR_SUCCESS;
-    char errstr[ERRSTR_SZ] = {0};
-
     bool iat_complted = false;
 
     // 是否已经停止了？
-    status = apr_thread_mutex_lock(sess->stopped_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[term_session] [%s] apr_thread_mutex_lock failed for "
-            "stopped mutex. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
+    LOG_APR_ERROR(apr_thread_mutex_lock(sess->stopped_mutex));
     iat_complted = sess->iat_complted;
-    status = apr_thread_mutex_unlock(sess->stopped_mutex);
-    if (APR_SUCCESS != status) {
-        apr_strerror(status, errstr, ERRSTR_SZ);
-        LOG_CRITICAL(
-            "[term_session] [%s] apr_thread_mutex_unlock failed for "
-            "stopped mutex. "
-            "error [%d] %s",
-            channel->id.buf, status, errstr);
-        return FALSE;
-    }
+    LOG_APR_ERROR(apr_thread_mutex_unlock(sess->stopped_mutex));
 
     if (!iat_complted) {
         // 通知停止
         LOG_DEBUG("[term_session] [%s] terminate", channel->id.buf);
-        status = apr_queue_term(sess->wav_queue);
-        if (APR_SUCCESS != status) {
-            apr_strerror(status, errstr, ERRSTR_SZ);
-            LOG_CRITICAL(
-                "[term_session] [%s] apr_queue_term failed. error [%d] %s",
-                channel->id.buf, status, errstr);
-            return FALSE;
-        }
+        LOG_APR_ERROR(apr_queue_term(sess->wav_queue));
 
         // 等待识别的会话处理线程结束
         LOG_DEBUG("[term_session] [%s] recog_thread_func stopping...",
                   channel->id.buf);
-        status = apr_thread_mutex_lock(sess->stopped_mutex);
-        if (APR_SUCCESS != status) {
-            apr_strerror(status, errstr, ERRSTR_SZ);
-            LOG_ERROR(
-                "[term_session] [%s] apr_thread_mutex_lock failed for "
-                "stopped_mutex. error "
-                "[%d] "
-                "%s",
-                channel->id.buf, status, errstr);
-            return FALSE;
-        }
-        status = apr_thread_cond_wait(sess->stopped_cond, sess->stopped_mutex);
-        if (APR_SUCCESS != status) {
-            apr_strerror(status, errstr, ERRSTR_SZ);
-            LOG_ERROR(
-                "[term_session] [%s] apr_thread_cond_wait failed for "
-                "stopped_mutex. error "
-                "[%d] "
-                "%s",
-                channel->id.buf, status, errstr);
-            return FALSE;
-        }
-        status = apr_thread_mutex_unlock(sess->stopped_mutex);
-        if (APR_SUCCESS != status) {
-            apr_strerror(status, errstr, ERRSTR_SZ);
-            LOG_ERROR(
-                "[term_session] [%s] apr_thread_mutex_unlock failed for "
-                "stopped_mutex. error "
-                "[%d] "
-                "%s",
-                channel->id.buf, status, errstr);
-            return FALSE;
-        }
+        LOG_APR_ERROR(apr_thread_mutex_lock(sess->stopped_mutex));
+        LOG_APR_ERROR(
+            apr_thread_cond_wait(sess->stopped_cond, sess->stopped_mutex));
+        LOG_APR_ERROR(apr_thread_mutex_unlock(sess->stopped_mutex));
         LOG_DEBUG("[term_session] [%s] recog_thread_func stopped.",
                   channel->id.buf);
     }

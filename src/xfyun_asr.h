@@ -50,6 +50,7 @@
 #define TASK_NAME "XFYUN ASR Engine"
 
 #define ERRSTR_SZ 256
+#define APR_ERRMSG_LEN 256
 #define IAT_SESSION_ID_LEN 64
 #define IAT_BEGIN_PARAMS_LEN 2048
 #define IAT_RESULT_STR_LEN 2048
@@ -98,8 +99,24 @@ MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
 #define LOG_EMERGENCY(fmt, ...) \
     apt_log(XFYUNASR_LOG_MARK, APT_PRIO_EMERGENCY, LOGGER fmt, ##__VA_ARGS__)
 
+#define LOG_APR_ERRMSG(level, exp)                           \
+    do {                                                     \
+        apr_status_t status = exp;                           \
+        if (APR_SUCCESS != status) {                         \
+            char errmsg[APR_ERRMSG_LEN] = {0};               \
+            apr_strerror(status, errmsg, APR_ERRMSG_LEN);    \
+            LOG(level, "APR error %d: %s.", status, errmsg); \
+        }                                                    \
+    } while (0)
+
+#define LOG_APR_ERROR(exp) LOG_APR_ERRMSG(APT_PRIO_ERROR, exp)
+#define LOG_APR_CRITICAL(exp) LOG_APR_ERRMSG(APT_PRIO_CRITICAL, exp)
+#define LOG_APR_WARNING(exp) LOG_APR_ERRMSG(APT_PRIO_WARNING, exp)
+
 /** 插件的线程池 */
 static apr_thread_pool_t* thread_pool = NULL;
+static bool conf_loaded = false;
+static apr_thread_mutex_t* conf_mutex = NULL;
 static apr_table_t* thread_pool_conf = NULL;
 static apr_table_t* qis_session_login_params_conf = NULL;
 
