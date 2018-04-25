@@ -137,7 +137,7 @@ static bool conf_loaded = false;
 static apr_thread_mutex_t* conf_mutex = NULL;
 static apr_table_t* thread_pool_conf = NULL;
 static apr_table_t* msp_login_conf = NULL;
-static apr_table_t* qis_session_login_params_conf = NULL;
+static apr_table_t* qis_session_params_conf = NULL;
 
 /** Declaration of recognizer engine object to associate */
 typedef struct _engine_object_t {
@@ -319,6 +319,8 @@ static void load_conf(mrcp_engine_t* engine);
 static void create_thread_pool(apr_pool_t* p);
 
 static void perform_msp_login(apr_pool_t* p);
+
+static void set_session_iat_params(session_t* sess);
 
 static char* tab_to_str(apr_table_t* tab, apr_pool_t* p);
 static int _tab_to_str_cb(void* rec, const char* key, const char* value);

@@ -10,6 +10,8 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     CONF_INIT(DEFAULT_CONF_PLUGIN_THREADPOOL, thread_pool_conf, pool);
     // 听写APP设置
     CONF_INIT(DEFAULT_CONF_MSPLOGIN_PARAMS, msp_login_conf, pool);
+    // 听写会话设置
+    CONF_INIT(DEFAULT_CONF_QISRSession_PARAMS, qis_session_params_conf, pool);
 
     // conf 相关全局变量
     LOG_DEBUG("[plugin_create] create configure mutex");
@@ -124,7 +126,7 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
 
     sess->iat_session_id = NULL;
     sess->iat_complted = false;
-    sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
+    sess->iat_begin_params = NULL;
     sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
 
     /// stream 设置
@@ -361,6 +363,8 @@ apt_bool_t on_channel_open(session_t* sess) {
     } while (false);
     LOG_APR_CRITICAL(apr_thread_mutex_unlock(conf_mutex));
 
+    set_session_iat_params(sess);
+
     LOG_DEBUG("[on_channel_open] [%s] <<<", channel->id.buf);
     return result;
 }
@@ -409,14 +413,7 @@ apt_bool_t on_recog_start(session_t* sess,
     mrcp_engine_channel_t* channel = sess->channel;
     LOG_DEBUG("[on_recog_start] [%s]", channel->id.buf);
 
-    // 开始一个语音会话
-    const char* session_begin_params =
-        "sub = iat, domain = iat, aue = raw, language = zh_cn, accent = "
-        "mandarin, "
-        "sample_rate = 8000, result_type = plain, result_encoding = utf8";
-    strncpy(sess->iat_begin_params, session_begin_params, IAT_BEGIN_PARAMS_LEN);
-
-    // 启动会话处理线程
+    // 开始一个语音会话 - 启动会话处理线程
     LOG_DEBUG("[on_recog_start] [%s] recog_thread_func starting ...",
               channel->id.buf);
     LOG_APR_CRITICAL(
@@ -492,7 +489,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
 
     do {
         // 开始【讯飞云】听写会话
-        LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin", channel->id.buf);
+        LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin(%s)",
+                  channel->id.buf, sess->iat_begin_params);
         const char* iat_session_id =
             QISRSessionBegin(NULL, sess->iat_begin_params,
                              &errcode);  //听写不需要语法，第一个参数为NULL
@@ -832,6 +830,8 @@ void load_conf(mrcp_engine_t* engine) {
                 if (!xmlNodeIsText(txt_node))
                     continue;
                 const char* name = (const char*)ele_node->name;
+                if (NULL == apr_table_get(thread_pool_conf, name))
+                    continue;
                 const char* txt = (const char*)xmlNodeGetContent(txt_node);
                 char* val = apr_pstrdup(pool, txt);
                 apr_collapse_spaces(val, val);
@@ -844,7 +844,7 @@ void load_conf(mrcp_engine_t* engine) {
         }
     }
 
-    /// msp_login_conf
+    /// xfyun APP 登录设置 msp_login_conf
     /// /xfyun-asr/MSPLogin/params/*
     do {
         char xpath[] = "/xfyun-asr/MSPLogin/params/*";
@@ -858,6 +858,8 @@ void load_conf(mrcp_engine_t* engine) {
                 if (!xmlNodeIsText(txt_node))
                     continue;
                 const char* name = (const char*)ele_node->name;
+                if (NULL == apr_table_get(msp_login_conf, name))
+                    continue;
                 const char* txt = (const char*)xmlNodeGetContent(txt_node);
                 char* val = apr_pstrdup(pool, txt);
                 apr_collapse_spaces(val, val);
@@ -868,6 +870,37 @@ void load_conf(mrcp_engine_t* engine) {
             }
             xmlXPathFreeObject(result);
         }
+    } while (false);
+
+    /// xfyun 在线听写参数设置 qis_session_params_conf
+    /// /xfyun-asr/QISRSession/params/*
+    do {
+        char xpath[] = "/xfyun-asr/QISRSession/params/*";
+        LOG_DEBUG("[load_conf] xpath %s", xpath);
+        xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
+        if (result) {
+            xmlNodeSetPtr nodeset = result->nodesetval;
+            for (unsigned i = 0; i < nodeset->nodeNr; ++i) {
+                xmlNodePtr ele_node = nodeset->nodeTab[i];
+                xmlNodePtr txt_node = ele_node->xmlChildrenNode;
+                if (!xmlNodeIsText(txt_node))
+                    continue;
+                const char* name = (const char*)ele_node->name;
+                if (NULL == apr_table_get(qis_session_params_conf, name))
+                    continue;
+                const char* txt = (const char*)xmlNodeGetContent(txt_node);
+                char* val = apr_pstrdup(pool, txt);
+                apr_collapse_spaces(val, val);
+                LOG_INFO("[load_conf] %s: %s=%s", xpath, name, val);
+                if (val[0]) {
+                    apr_table_set(qis_session_params_conf, name, val);
+                }
+            }
+            xmlXPathFreeObject(result);
+        }
+        // 几个固定不能修改的值
+        apr_table_set(qis_session_params_conf, "result_type", "plain");
+        apr_table_set(qis_session_params_conf, "result_encoding", "utf8");
     } while (false);
 
     free(doc);
@@ -909,6 +942,12 @@ void perform_msp_login(apr_pool_t* p) {
         return;
     }
     LOG_DEBUG("[perform_msp_login] <<<");
+}
+
+void set_session_iat_params(session_t* sess) {
+    mrcp_engine_channel_t* channel = sess->channel;
+    apr_pool_t* p = channel->pool;
+    sess->iat_begin_params = tab_to_str(qis_session_params_conf, p);
 }
 
 char* tab_to_str(apr_table_t* tab, apr_pool_t* p) {

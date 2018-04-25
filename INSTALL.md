@@ -43,7 +43,7 @@ sudo ldconfig
 
 ### 插件共享库文件
 
-将本项目最终编译出来的共享库文件`baiduasr.so`复制到目标计算机上[uniMRPC]服务的`plugin`目录(默认路径是`/opt/unimrcp/plugin`)。
+将本项目最终编译出来的共享库文件`xfyun-asr.so`复制到目标计算机上[uniMRPC]服务的`plugin`目录(默认路径是`/opt/unimrcp/plugin`)。
 
 ### BAIDU ASR SDK 所需 VAD 算法模型文件
 
