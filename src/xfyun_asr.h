@@ -46,14 +46,21 @@
 
 // 其它依赖库的头文件
 #include <libxml/parser.h>
+#include <libxml/xpath.h>
 
 #define TASK_NAME "XFYUN ASR Engine"
 
-#define ERRSTR_SZ 256
+#define SESSION_WAV_QUEUE_LEN 8192
+#define MSC_PARAMS_STR_LEN 2048
 #define APR_ERRMSG_LEN 256
 #define IAT_SESSION_ID_LEN 64
 #define IAT_BEGIN_PARAMS_LEN 2048
 #define IAT_RESULT_STR_LEN 2048
+
+typedef struct __str_and_pool_t {
+    char* s;
+    apr_pool_t* p;
+} _str_and_pool_t;
 
 /**
  * 每个识别会话的流媒体缓冲 QUEUE 中，放这个对象
@@ -113,11 +120,23 @@ MRCP_PLUGIN_LOG_SOURCE_IMPLEMENT(XFYUNASR_PLUGIN, "XFYUNASR-PLUGIN")
 #define LOG_APR_CRITICAL(exp) LOG_APR_ERRMSG(APT_PRIO_CRITICAL, exp)
 #define LOG_APR_WARNING(exp) LOG_APR_ERRMSG(APT_PRIO_WARNING, exp)
 
+#define CONF_ROW_COUNT(conf) (sizeof(conf) / sizeof(conf[0]))
+
+#define CONF_INIT(conf, tab, p)                         \
+    do {                                                \
+        size_t nelts = CONF_ROW_COUNT(conf);            \
+        tab = apr_table_make(p, nelts);                 \
+        for (unsigned i = 0; i < nelts; ++i) {          \
+            apr_table_set(tab, conf[i][0], conf[i][1]); \
+        }                                               \
+    } while (0)
+
 /** 插件的线程池 */
 static apr_thread_pool_t* thread_pool = NULL;
 static bool conf_loaded = false;
 static apr_thread_mutex_t* conf_mutex = NULL;
 static apr_table_t* thread_pool_conf = NULL;
+static apr_table_t* msp_login_conf = NULL;
 static apr_table_t* qis_session_login_params_conf = NULL;
 
 /** Declaration of recognizer engine object to associate */
@@ -294,5 +313,14 @@ static void emit_recog_result(session_t* sess,
                               mrcp_recog_completion_cause_e cause);
 
 static bool generate_nlsml_result(session_t* sess, mrcp_message_t* message);
+
+static void load_conf(mrcp_engine_t* engine);
+
+static void create_thread_pool(apr_pool_t* p);
+
+static void perform_msp_login(apr_pool_t* p);
+
+static char* tab_to_str(apr_table_t* tab, apr_pool_t* p);
+static int _tab_to_str_cb(void* rec, const char* key, const char* value);
 
 #endif

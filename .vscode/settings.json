@@ -12,6 +12,10 @@
         "*.tcc": "cpp",
         "climits": "cpp",
         "xfyun_default_conf.h": "c",
-        "xfyun_asr.h": "c"
+        "xfyun_asr.h": "c",
+        "parser.h": "c",
+        "hash.h": "c",
+        "cstdlib": "c",
+        "typeinfo": "c"
     }
 }

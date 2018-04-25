@@ -5,6 +5,11 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
     LOG_NOTICE("[plugin_create] Version: %s. Compiler: %s. Build-Time: %s %s",
                MAKE_STR(VERSION_STRING), MAKE_STR(COMPILER_STRING), __TIME__,
                __DATE__);
+    // 加载默认配置
+    // 线程池设置
+    CONF_INIT(DEFAULT_CONF_PLUGIN_THREADPOOL, thread_pool_conf, pool);
+    // 听写APP设置
+    CONF_INIT(DEFAULT_CONF_MSPLOGIN_PARAMS, msp_login_conf, pool);
 
     // conf 相关全局变量
     LOG_DEBUG("[plugin_create] create configure mutex");
@@ -55,6 +60,7 @@ mrcp_engine_t* mrcp_plugin_create(apr_pool_t* pool) {
 apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
     LOG_NOTICE("[plugin_destroy]");
 
+    LOG_DEBUG("[plugin_destroy] destroy task message pool");
     engine_object_t* obj = (engine_object_t*)engine->obj;
     if (obj->task) {
         apt_task_t* task = apt_consumer_task_base_get(obj->task);
@@ -72,17 +78,6 @@ apt_bool_t plugin_destroy(mrcp_engine_t* engine) {
 
 apt_bool_t plugin_open(mrcp_engine_t* engine) {
     LOG_NOTICE("[plugin_open]");
-
-    const char* login_params =
-        "appid = 5acb316c, work_dir = .";  // 登录参数，appid与msc库绑定,请勿随意改动
-
-    LOG_INFO("[plugin_open] MSPLogin(%s)", login_params);
-    int errcode = MSPLogin(NULL, NULL, login_params);
-    if (MSP_SUCCESS != errcode) {
-        LOG_ERROR("[plugin_open] MSPLogin(%s) failed, error %d", login_params,
-                  errcode);
-        return FALSE;
-    }
 
     engine_object_t* obj = (engine_object_t*)engine->obj;
     if (obj->task) {
@@ -124,14 +119,13 @@ mrcp_engine_channel_t* channel_create(mrcp_engine_t* engine, apr_pool_t* pool) {
     LOG_APR_CRITICAL(apr_thread_cond_create(&sess->stopped_cond, pool));
     LOG_APR_CRITICAL(apr_thread_mutex_create(&sess->stopped_mutex,
                                              APR_THREAD_MUTEX_DEFAULT, pool));
+    LOG_APR_CRITICAL(
+        apr_queue_create(&sess->wav_queue, SESSION_WAV_QUEUE_LEN, pool));
 
     sess->iat_session_id = NULL;
     sess->iat_complted = false;
     sess->iat_begin_params = (char*)apr_pcalloc(pool, IAT_BEGIN_PARAMS_LEN);
     sess->iat_result = (char*)apr_pcalloc(pool, IAT_RESULT_STR_LEN);
-
-    // TODO: 最大缓冲数量到底要设置为多少？
-    LOG_APR_CRITICAL(apr_queue_create(&sess->wav_queue, 8192, pool));
 
     /// stream 设置
     mpf_stream_capabilities_t* capabilities;
@@ -339,28 +333,24 @@ apt_bool_t task_msg_process(apt_task_t* task, apt_task_msg_t* msg) {
 
 apt_bool_t on_channel_open(session_t* sess) {
     mrcp_engine_channel_t* channel = sess->channel;
-    LOG_DEBUG("[on_channel_open] [%s]", channel->id.buf);
+    LOG_DEBUG("[on_channel_open] [%s] >>>", channel->id.buf);
 
     bool result = false;
 
-    LOG_DEBUG("[on_channel_open] [%s] configure >>>", channel->id.buf);
     LOG_APR_CRITICAL(apr_thread_mutex_lock(conf_mutex));
     do {
         if (conf_loaded) {
             result = true;
         } else {
             // 还没有加在配置，需要一次加载+部分初始化
-            LOG_DEBUG("[on_channel_open] [%s] configurate ...",
-                      channel->id.buf);
+            // 读配置
+            load_conf(channel->engine);
 
-            // TODO: 线程池的大小设置
-            if (!thread_pool) {
-                LOG_INFO("[on_channel_open] [%s] apr_thread_pool_create",
-                         channel->id.buf);
-                LOG_APR_CRITICAL(apr_thread_pool_create(
-                    &thread_pool, get_nprocs(), get_nprocs() * 5,
-                    channel->engine->pool));
-            }
+            // 根据配置，建立插件的全局线程池
+            create_thread_pool(channel->engine->pool);
+
+            // 首次加载配置之后，应该进行登录！
+            perform_msp_login(channel->engine->pool);
 
             // 标记：加载完成
             LOG_DEBUG("[on_channel_open] [%s] configurate completed.",
@@ -370,8 +360,8 @@ apt_bool_t on_channel_open(session_t* sess) {
         }
     } while (false);
     LOG_APR_CRITICAL(apr_thread_mutex_unlock(conf_mutex));
-    LOG_DEBUG("[on_channel_open] [%s] configure <<<", channel->id.buf);
 
+    LOG_DEBUG("[on_channel_open] [%s] <<<", channel->id.buf);
     return result;
 }
 
@@ -518,9 +508,8 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
                       channel->id.buf);
             break;
         }
-        sess->iat_session_id =
-            (char*)apr_pcalloc(channel->pool, IAT_SESSION_ID_LEN);
-        strncpy(sess->iat_session_id, iat_session_id, IAT_SESSION_ID_LEN);
+
+        sess->iat_session_id = apr_pstrdup(channel->pool, iat_session_id);
         LOG_DEBUG("[recog_thread_func] [%s] QISRSessionBegin -> %s",
                   channel->id.buf, sess->iat_session_id);
 
@@ -656,6 +645,9 @@ void* recog_thread_func(apr_thread_t* thread, void* arg) {
             emit_recog_result(sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
         }
     } while (false);
+
+    LOG_INFO("[recog_thread_func] [%s] (%s) result: %s", channel->id.buf,
+             sess->iat_session_id, sess->iat_result);
 
     // 设置结束标志
     LOG_APR_CRITICAL(apr_thread_mutex_lock(sess->stopped_mutex));
@@ -804,4 +796,137 @@ bool generate_nlsml_result(session_t* sess, mrcp_message_t* message) {
     free(xmlbuff);
 
     return true;
+}
+
+void load_conf(mrcp_engine_t* engine) {
+    LOG_DEBUG("[load_conf] >>>");
+
+    apr_pool_t* pool = engine->pool;
+    const char* file_path = apt_confdir_filepath_get(
+        engine->dir_layout, "plugin-xfyun-asr.xml", pool);
+    LOG_INFO("[load_conf] configure file: %s", file_path);
+
+    int parse_opt = XML_PARSE_NOBLANKS | XML_PARSE_NOCDATA;
+    xmlDocPtr doc = xmlReadFile(file_path, "UTF-8", parse_opt);
+    if (doc == NULL) {
+        LOG_CRITICAL("[load_conf] xmlParseFile(%s) failed.", file_path);
+        return;
+    }
+
+    xmlXPathContextPtr context = xmlXPathNewContext(doc);
+    if (context == NULL) {
+        LOG_CRITICAL("[load_conf] xmlXPathNewContext failed.");
+        return;
+    }
+
+    // 线程池设置: /xfyun-asr/plugin/thread_pool/*
+    if (!thread_pool) {
+        char xpath[] = "/xfyun-asr/plugin/thread_pool/*";
+        LOG_DEBUG("[load_conf] xpath %s", xpath);
+        xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
+        if (result) {
+            xmlNodeSetPtr nodeset = result->nodesetval;
+            for (unsigned i = 0; i < nodeset->nodeNr; ++i) {
+                xmlNodePtr ele_node = nodeset->nodeTab[i];
+                xmlNodePtr txt_node = ele_node->xmlChildrenNode;
+                if (!xmlNodeIsText(txt_node))
+                    continue;
+                const char* name = (const char*)ele_node->name;
+                const char* txt = (const char*)xmlNodeGetContent(txt_node);
+                char* val = apr_pstrdup(pool, txt);
+                apr_collapse_spaces(val, val);
+                LOG_INFO("[load_conf] %s: %s=%s", xpath, name, val);
+                if (val[0]) {
+                    apr_table_set(thread_pool_conf, name, val);
+                }
+            }
+            xmlXPathFreeObject(result);
+        }
+    }
+
+    /// msp_login_conf
+    /// /xfyun-asr/MSPLogin/params/*
+    do {
+        char xpath[] = "/xfyun-asr/MSPLogin/params/*";
+        LOG_DEBUG("[load_conf] xpath %s", xpath);
+        xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
+        if (result) {
+            xmlNodeSetPtr nodeset = result->nodesetval;
+            for (unsigned i = 0; i < nodeset->nodeNr; ++i) {
+                xmlNodePtr ele_node = nodeset->nodeTab[i];
+                xmlNodePtr txt_node = ele_node->xmlChildrenNode;
+                if (!xmlNodeIsText(txt_node))
+                    continue;
+                const char* name = (const char*)ele_node->name;
+                const char* txt = (const char*)xmlNodeGetContent(txt_node);
+                char* val = apr_pstrdup(pool, txt);
+                apr_collapse_spaces(val, val);
+                LOG_INFO("[load_conf] %s: %s=%s", xpath, name, val);
+                if (val[0]) {
+                    apr_table_set(msp_login_conf, name, val);
+                }
+            }
+            xmlXPathFreeObject(result);
+        }
+    } while (false);
+
+    free(doc);
+
+    LOG_DEBUG("[load_conf] <<<");
+}
+
+void create_thread_pool(apr_pool_t* p) {
+    // 建立插件的全局线程池
+    LOG_DEBUG("[create_thread_pool] >>>");
+    apr_size_t init_threads = get_nprocs();
+    apr_size_t max_threads = get_nprocs() * 5;
+    const char* str_init_threads =
+        apr_table_get(thread_pool_conf, "init_threads");
+    if (str_init_threads[0])
+        init_threads = apr_atoi64(str_init_threads);
+    const char* str_max_threads =
+        apr_table_get(thread_pool_conf, "max_threads");
+    if (str_max_threads[0])
+        max_threads = apr_atoi64(str_max_threads);
+    LOG_INFO("[create_thread_pool] init_threads=%d max_threads=%d",
+             init_threads, max_threads);
+    LOG_APR_CRITICAL(
+        apr_thread_pool_create(&thread_pool, init_threads, max_threads, p));
+    LOG_DEBUG("[create_thread_pool] <<<");
+}
+
+void perform_msp_login(apr_pool_t* p) {
+    LOG_DEBUG("[perform_msp_login] >>>");
+
+    // 登录参数，appid与msc库绑定
+    const char* login_params = tab_to_str(msp_login_conf, p);
+
+    LOG_INFO("[plugin_open] MSPLogin(%s)", login_params);
+    int errcode = MSPLogin(NULL, NULL, login_params);
+    if (MSP_SUCCESS != errcode) {
+        LOG_CRITICAL("[perform_msp_login] MSPLogin(%s) failed, error %d",
+                     login_params, errcode);
+        return;
+    }
+    LOG_DEBUG("[perform_msp_login] <<<");
+}
+
+char* tab_to_str(apr_table_t* tab, apr_pool_t* p) {
+    char* s = apr_pcalloc(p, MSC_PARAMS_STR_LEN);
+    _str_and_pool_t rec = {s, p};
+    apr_table_do(_tab_to_str_cb, (void*)&rec, tab, NULL);
+    return s;
+}
+
+int _tab_to_str_cb(void* rec, const char* key, const char* value) {
+    _str_and_pool_t* sp_rec = (_str_and_pool_t*)rec;
+    char* s = sp_rec->s;
+    apr_pool_t* p = sp_rec->p;
+    char* kv = apr_pcalloc(p, 128);
+    apr_snprintf(kv, 128, "%s = %s", key, value);
+    if (s[0])
+        strncat(s, ", ", MSC_PARAMS_STR_LEN - strlen(s));
+    strncat(s, kv, MSC_PARAMS_STR_LEN - strlen(s));
+
+    return 1;
 }

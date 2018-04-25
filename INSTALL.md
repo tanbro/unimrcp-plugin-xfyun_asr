@@ -87,21 +87,13 @@ sudo ldconfig
             <!-- 初始线程数
             默认： cpu_count
             -->
-            <init_threads>0</init_threads>
+            <init_threads>4</init_threads>
             <!-- 最大线程数
             默认： cpu_count * 5
             -->
-            <max_threads>10</max_threads>
+            <max_threads>16</max_threads>
         </thread_pool>
 
-        <!-- 音频流缓冲队列设置 -->
-        <wav_queue>
-            <!-- 队列的容量。
-            注意这个容量是每个会话中，可存放的音频流包的个数，不是字节大小。
-            默认: 8192
-            -->
-            <capacity>8192</capacity>
-        </wav_queue>
     </plugin>
 
     <!-- 在线听写会话配置 -->
