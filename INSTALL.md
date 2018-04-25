@@ -22,7 +22,7 @@ sudo apt install libxml2
 sudo yum install libxml2
 ```
 
-## SDK 共享库
+## 讯飞云[msc]共享库
 
 将讯飞云[msc]SDK的共享库文件`libmsc.so`复制到目标计算机的`/usr/local/lib`，并执行：
 
@@ -32,22 +32,8 @@ sudo ldconfig
 
 **‼ 注意**:
 
-> - 讯飞云[msc]SDK的共享库文件包含有对应的讯飞云`APP`的`ID`。所以，本插件所使用的一个SDK共享库只能对应地使用`ID`相同的`APP`。
+> - 讯飞云[msc]SDK的共享库二进制文件包含有对应的讯飞云`APP`的`ID`。所以，本插件所使用的一个SDK共享库只能对应地使用`ID`相同的`APP`。
 > - 确保`/usr/local/lib`在`ld`的搜索路径中。
-
-## 插件和相关文件
-
-**‼ 注意**:
-
-> 执行`uniMRCP Server`程序的用户/组，需要有这些文件的读权限。
-
-### 插件共享库文件
-
-将本项目最终编译出来的共享库文件`xfyun-asr.so`复制到目标计算机上[uniMRPC]服务的`plugin`目录(默认路径是`/opt/unimrcp/plugin`)。
-
-### BAIDU ASR SDK 所需 VAD 算法模型文件
-
-将百度 ASR Linux C++ SDK 提供的 VAD 算法模型文件`bds_easr_mfe_dnn.dat`与`bds_easr_mfe_cmvn.dat`复制到目标计算机上[uniMRPC]服务的`data`目录(默认路径是`/opt/unimrcp/data`)。
 
 ### 配置文件
 
