@@ -234,22 +234,16 @@ apt_bool_t stream_write_frame(mpf_audio_stream_t* stream,
                     "[stream_write_frame] [%s] MPF: voice IN-ACTIVITY event "
                     "occurred. " APT_SIDRES_FMT,
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf);
-                // TODO: 输入完成
-                // _event_recognition_complete(
-                //     sess, RECOGNIZER_COMPLETION_CAUSE_SUCCESS);
+                // TODO: 无声（MPF是按照收到的媒体流数据包判断的！）
                 break;
             case MPF_DETECTOR_EVENT_NOINPUT:
                 LOG_DEBUG(
                     "[stream_write_frame] [%s] MPF: NO-INPUT event "
                     "occurred. " APT_SIDRES_FMT,
                     MRCP_MESSAGE_SIDRES(sess->recog_request), channel->id.buf);
-                // TODO: 输入超时
-                // if (sess->timers_started) {
-                // TODO: 输入超时
-                // _event_recognition_complete(
-                //     bdsr_channel,
-                //     RECOGNIZER_COMPLETION_CAUSE_NO_INPUT_TIMEOUT);
-                // }
+                // TODO: 输入超时（MPF是按照收到的媒体流数据包判断的！）
+                emit_recog_result(sess,
+                                  RECOGNIZER_COMPLETION_CAUSE_NO_INPUT_TIMEOUT);
                 break;
             default:
                 break;
